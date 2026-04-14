@@ -1,0 +1,25 @@
+{
+  "folders": [
+    {
+      "name": "RetailCore",
+      "path": ".",
+    },
+    {
+      "name": "RetailCore.Api",
+      "path": "RetailCore.Api",
+    },
+    {
+      "name": "RetailCore.Shared",
+      "path": "RetailCore.Shared",
+    },
+    {
+      "name": "RetailCore.Customer",
+      "path": "RetailCore.Customer",
+    },
+    {
+      "name": "RetailCore.Admin",
+      "path": "RetailCore.Admin",
+    },
+  ],
+  "settings": {},
+}
