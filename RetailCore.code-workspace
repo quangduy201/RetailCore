@@ -9,6 +9,14 @@
       "path": "RetailCore.Api",
     },
     {
+      "name": "RetailCore.Services",
+      "path": "RetailCore.Services",
+    },
+    {
+      "name": "RetailCore.Repositories",
+      "path": "RetailCore.Repositories",
+    },
+    {
       "name": "RetailCore.Shared",
       "path": "RetailCore.Shared",
     },
