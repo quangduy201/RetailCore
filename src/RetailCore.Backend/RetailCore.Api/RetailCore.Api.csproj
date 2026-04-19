@@ -11,8 +11,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../../RetailCore.Shared/RetailCore.Shared.csproj" />
     <ProjectReference Include="../RetailCore.Services/RetailCore.Services.csproj" />
-    <ProjectReference Include="../RetailCore.Shared/RetailCore.Shared.csproj" />
   </ItemGroup>
 
 </Project>
