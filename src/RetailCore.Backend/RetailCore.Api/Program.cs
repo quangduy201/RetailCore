@@ -1,8 +1,18 @@
+using RetailCore.Repositories.Options;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+
+// Database
+var dbOptions = builder.Configuration
+    .GetSection("Database")
+    .Get<DatabaseOptions>()
+    ?? throw new InvalidOperationException("Database config missing");
+
+builder.Services.AddRepositories(dbOptions);
 
 var app = builder.Build();
 
@@ -21,7 +31,7 @@ var summaries = new[]
 
 app.MapGet("/weatherforecast", () =>
 {
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
+    var forecast = Enumerable.Range(1, 5).Select(index =>
         new WeatherForecast
         (
             DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
