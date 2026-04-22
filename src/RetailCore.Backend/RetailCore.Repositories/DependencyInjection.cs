@@ -12,6 +12,7 @@ public static class DependencyInjection
         services.AddDbContext<AppDbContext>(opt => opt.UseSqlServer(options.ConnectionString));
 
         services.AddScoped<IProductRepository, ProductRepository>();
+        services.AddScoped<ICategoryRepository, CategoryRepository>();
 
         return services;
     }
