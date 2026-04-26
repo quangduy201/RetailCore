@@ -1,10 +1,105 @@
 ﻿@page
 @model IndexModel
 @{
-    ViewData["Title"] = "Home page";
+    ViewData["Title"] = "Home";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container-lg">
+        <div class="row align-items-center">
+            <div class="col-lg-6 mb-4 mb-lg-0">
+                <h1 class="display-4 fw-bold mb-4">Premium Tech Accessories</h1>
+                <p class="fs-5 mb-4 mb-lg-5">Elevate your tech setup with our curated collection of high-quality accessories for professionals and enthusiasts.</p>
+                <a asp-page="/Products/Index" class="btn btn-light btn-lg fw-bold">
+                    Shop Now <i class="fas fa-arrow-right ms-2"></i>
+                </a>
+            </div>
+            <div class="col-lg-6 d-none d-lg-flex justify-content-center">
+                <div style="font-size: 15rem; opacity: 0.3;">
+                    <i class="fas fa-microchip"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Categories Section -->
+<section class="py-5 bg-light">
+    <div class="container-lg">
+        <h2 class="display-5 fw-bold text-center mb-5">Shop by Category</h2>
+        <div class="row g-3">
+            @foreach (var category in Model.Categories)
+            {
+                <div class="col-6 col-md-4 col-lg-3">
+                    <a asp-page="/Products/Index" asp-route-category="@category.Name" class="text-decoration-none">
+                        <div class="card card-hover text-center p-4" style="background: linear-gradient(to bottom right, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1)); border: none;">
+                            <div style="font-size: 2rem; margin-bottom: 0.5rem;">@Html.Raw(category.Icon)</div>
+                            <h6 class="fw-semibold text-dark">@category.Name</h6>
+                        </div>
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+<!-- Featured Products Section -->
+<section class="py-5">
+    <div class="container-lg">
+        <div class="d-flex justify-content-between align-items-center mb-5">
+            <h2 class="display-5 fw-bold">Featured Products</h2>
+            <a asp-page="/Products/Index" class="text-decoration-none fw-semibold" style="color: var(--primary-color);">
+                View All <i class="fas fa-arrow-right ms-1"></i>
+            </a>
+        </div>
+
+        <div class="row g-4">
+            @foreach (var product in Model.FeaturedProducts)
+            {
+                <div class="col-md-6 col-lg-3">
+                    @{
+                        ViewData["Product"] = product;
+                    }
+                    <partial name="Shared/ProductCard" />
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+<!-- Stats Section -->
+<section class="py-5" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+    <div class="container-lg">
+        <div class="row text-center">
+            <div class="col-md-4 mb-4 mb-md-0">
+                <h3 class="display-5 fw-bold mb-2">50K+</h3>
+                <p class="fs-5">Happy Customers</p>
+            </div>
+            <div class="col-md-4 mb-4 mb-md-0">
+                <h3 class="display-5 fw-bold mb-2">1000+</h3>
+                <p class="fs-5">Premium Products</p>
+            </div>
+            <div class="col-md-4">
+                <h3 class="display-5 fw-bold mb-2">24/7</h3>
+                <p class="fs-5">Customer Support</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Newsletter Section -->
+<section class="py-5">
+    <div class="container-lg">
+        <div class="row justify-content-center">
+            <div class="col-md-6 text-center">
+                <h2 class="display-5 fw-bold mb-3">Stay Updated</h2>
+                <p class="text-muted mb-4">Subscribe to get special offers and the latest tech news.</p>
+                <form class="d-flex gap-2">
+                    <input type="email" placeholder="Enter your email" class="form-control" required />
+                    <button type="submit" class="btn btn-primary-gradient px-4">Subscribe</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>

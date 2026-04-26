@@ -1,0 +1,101 @@
+@using RetailCore.Customer.Services
+@{
+    var product = (ProductModel)ViewData["Product"]!;
+}
+
+<div class="card product-card card-hover h-100">
+    <!-- Image Container -->
+    <div class="img-container position-relative">
+        @{
+            var imageUrl = product.Images.FirstOrDefault() ?? "/images/placeholder.png";
+            <img src="@imageUrl" alt="@product.Name" class="card-img-top" />
+        }
+        @{
+            var price = product.Variants.FirstOrDefault()?.Price ?? 0;
+            var compareAtPrice = product.Variants.FirstOrDefault()?.CompareAtPrice ?? -1;
+            var discount = ((compareAtPrice - price) / compareAtPrice) * 100;
+            if (compareAtPrice > price)
+            {
+                <div class="position-absolute top-0 end-0 m-3" style="background-color: #dc3545; color: white; padding: 0.5rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 600;">
+                    -@Math.Round(discount)%
+                </div>
+            }
+        }
+        <div class="position-absolute bottom-0 start-0 end-0" style="background: linear-gradient(to top, rgba(0,0,0,0.6), transparent); padding: 1rem; opacity: 0; transition: opacity 0.3s; height: 100%;" class="img-overlay">
+        </div>
+    </div>
+
+    <!-- Content -->
+    <div class="card-body d-flex flex-column">
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <p class="text-muted small mb-0">@product.Brand.Name</p>
+            <button class="btn btn-light btn-md rounded-circle ms-auto">
+                <i class="far fa-heart"></i>
+            </button>
+        </div>
+        <h5 class="card-title line-clamp-2 mb-2">@product.Name</h5>
+
+        <!-- Rating -->
+        <div class="rating mt-auto mb-2">
+            @for (int i = 0; i < 5; i++)
+            {
+                if (i < Math.Floor(product.AverageRating))
+                {
+                    <i class="fas fa-star star"></i>
+                }
+                else if (i < product.AverageRating)
+                {
+                    <i class="fas fa-star-half-alt star"></i>
+                }
+                else
+                {
+                    <i class="far fa-star" style="color: #d1d5db;"></i>
+                }
+            }
+            <small class="text-muted line-clamp-1">@product.AverageRating.ToString("F1") (@product.ReviewCount)</small>
+        </div>
+
+        <!-- Price -->
+        <div class="mb-3">
+            <div class="d-flex align-items-center gap-2">
+                <span class="fw-bold fs-5">@product.Variants.FirstOrDefault()?.Price.ToString("C")</span>
+                @if (product.Variants.FirstOrDefault()?.CompareAtPrice.HasValue == true)
+                {
+                    <small class="text-muted text-decoration-line-through">@product.Variants.FirstOrDefault()!.CompareAtPrice!.Value.ToString("C")</small>
+                }
+            </div>
+        </div>
+
+        <!-- Stock Status -->
+        <div class="mb-3">
+            @if (product.Status == "Active")
+            {
+                <small class="text-success fw-semibold">In Stock</small>
+            }
+            else
+            {
+                <small class="text-danger fw-semibold">Out of Stock</small>
+            }
+        </div>
+
+        <!-- Actions -->
+        <div class="d-flex gap-2">
+            <a asp-page="/Products/Details" asp-route-slug="@product.Slug" class="btn btn-primary flex-grow-1" style="background: var(--primary-gradient); border: none;">
+                View
+            </a>
+            <button class="btn btn-light flex-grow-1">
+                <i class="fas fa-shopping-cart"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .img-overlay {
+        opacity: 0 !important;
+    }
+    
+    .img-container:hover .img-overlay {
+        opacity: 1 !important;
+    }
+</style>
