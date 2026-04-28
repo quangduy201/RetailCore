@@ -7,19 +7,25 @@
     <!-- Image Container -->
     <div class="img-container position-relative">
         @{
-            var imageUrl = product.Images.FirstOrDefault() ?? "/images/placeholder.png";
-            <img src="@imageUrl" alt="@product.Name" class="card-img-top" />
+            var imageUrl = product.Images.FirstOrDefault() ?? "~/assets/images/placeholder.svg";
+            var placeholderUrl = @Url.Content("~/assets/images/placeholder.svg");
         }
+        <img
+            src="@imageUrl"
+            alt="@product.Name"
+            class="card-img-top"
+            onerror="this.onerror=null; this.src='@placeholderUrl';"
+        />
         @{
             var price = product.Variants.FirstOrDefault()?.Price ?? 0;
             var compareAtPrice = product.Variants.FirstOrDefault()?.CompareAtPrice ?? -1;
             var discount = ((compareAtPrice - price) / compareAtPrice) * 100;
-            if (compareAtPrice > price)
-            {
-                <div class="position-absolute top-0 end-0 m-3" style="background-color: #dc3545; color: white; padding: 0.5rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 600;">
-                    -@Math.Round(discount)%
-                </div>
-            }
+        }
+        @if (compareAtPrice > price)
+        {
+            <div class="position-absolute top-0 end-0 m-3" style="background-color: #dc3545; color: white; padding: 0.5rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 600;">
+                -@Math.Round(discount)%
+            </div>
         }
         <div class="position-absolute bottom-0 start-0 end-0" style="background: linear-gradient(to top, rgba(0,0,0,0.6), transparent); padding: 1rem; opacity: 0; transition: opacity 0.3s; height: 100%;" class="img-overlay">
         </div>
