@@ -65,9 +65,9 @@
         <div class="mb-3">
             <div class="d-flex align-items-center gap-2">
                 <span class="fw-bold fs-5">@product.Variants.FirstOrDefault()?.Price.ToString("C")</span>
-                @if (product.Variants.FirstOrDefault()?.CompareAtPrice.HasValue == true)
+                @if (compareAtPrice > price)
                 {
-                    <small class="text-muted text-decoration-line-through">@product.Variants.FirstOrDefault()!.CompareAtPrice!.Value.ToString("C")</small>
+                    <small class="text-muted text-decoration-line-through">@compareAtPrice.ToString("C")</small>
                 }
             </div>
         </div>
