@@ -81,17 +81,15 @@
                 <!-- Price -->
                 <div class="mb-4">
                     <div class="d-flex align-items-center gap-2">
-                        @{
-                            var price = product.Variants.FirstOrDefault()?.Price ?? 0;
-                            var compareAtPrice = product.Variants.FirstOrDefault()?.CompareAtPrice ?? -1;
-                            var discount = ((compareAtPrice - price) / compareAtPrice) * 100;
-                        }
-                        <span class="fs-3 fw-bold">@price.ToString("C")</span>
-                        @if (compareAtPrice > price)
-                        {
-                            <span class="text-muted text-decoration-line-through">@compareAtPrice.ToString("C")</span>
-                            <span class="badge bg-danger">Save @Math.Round(discount) %</span>
-                        }
+                        <span id="price" class="fs-3 fw-bold">
+                            @product.Variants.First().Price.ToString("C")
+                        </span>
+
+                        <span id="compare-price" class="text-muted text-decoration-line-through">
+                            @product.Variants.First().CompareAtPrice?.ToString("C")
+                        </span>
+
+                        <span id="discount-badge" class="badge bg-danger"></span>
                     </div>
                 </div>
 
@@ -122,18 +120,32 @@
                         <div class="d-flex flex-column gap-3">
                             @foreach (var variant in product.Variants)
                             {
-                                <div class="d-flex align-items-center gap-3 p-3 border rounded">
+                                var isChecked = variant == product.Variants.First();
+                                <input id="variant-@variant.Id" value="@variant.Id" type="radio" class="btn-check"
+                                       name="variantId" autocomplete="off" @(isChecked ? "checked" : "") />
+
+                                <label for="variant-@variant.Id"
+                                       class="btn btn-outline-secondary text-start d-flex align-items-center p-3"
+                                       data-price="@variant.Price" data-compare="@variant.CompareAtPrice">
                                     <div class="d-flex flex-column gap-1">
-                                        <span class="fw-semibold">@variant.Sku</span>
+                                        <span class="fw-semibold">
+                                            @string.Join(" / ", variant.Attributes.Values)
+                                        </span>
+
                                         <div class="d-flex flex-wrap gap-2">
                                             @foreach (var attr in variant.Attributes)
                                             {
-                                                <span class="badge bg-primary">@attr.Key: @attr.Value</span>
+                                                <span class="badge" style="background-color: var(--primary-color);">
+                                                    @attr.Key: @attr.Value
+                                                </span>
                                             }
                                         </div>
                                     </div>
-                                    <span class="ms-auto fw-bold">@variant.Price.ToString("C")</span>
-                                </div>
+
+                                    <span class="ms-auto fw-bold">
+                                        @variant.Price.ToString("C")
+                                    </span>
+                                </label>
                             }
                         </div>
                     </div>
@@ -183,6 +195,14 @@
     </div>
 </section>
 
+<style>
+    .btn-check+.btn.btn:hover {
+        color: var(--bs-btn-hover-color);
+        background-color: var(--bs-btn-hover-bg);
+        border-color: var(--bs-btn-hover-border-color);
+    }
+</style>
+
 <script>
     function increaseQuantity() {
         const input = document.getElementById('quantity-input');
@@ -211,4 +231,42 @@
             input.value = value;
         }
     }
+
+    function updateVariantUI(radio) {
+        const label = document.querySelector(`label[for="${radio.id}"]`);
+
+        const price = parseFloat(label.dataset.price || 0);
+        const compare = parseFloat(label.dataset.compare || 0);
+
+        const priceEl = document.getElementById('price');
+        const compareEl = document.getElementById('compare-price');
+        const discountEl = document.getElementById('discount-badge');
+
+        priceEl.textContent = price.toLocaleString(undefined, { style: 'currency', currency: 'USD' });
+
+        if (compare > price) {
+            compareEl.textContent = compare.toLocaleString(undefined, { style: 'currency', currency: 'USD' });
+            compareEl.style.display = 'inline';
+
+            const discount = Math.round((compare - price) / compare * 100);
+            discountEl.textContent = `Save ${discount}%`;
+            discountEl.style.display = 'inline';
+        } else {
+            compareEl.style.display = 'none';
+            discountEl.style.display = 'none';
+        }
+    }
+
+    document.querySelectorAll('input[name="variantId"]').forEach(radio => {
+        radio.addEventListener('change', function () {
+            updateVariantUI(this);
+        });
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const selected = document.querySelector('input[name="variantId"]:checked');
+        if (selected) {
+            updateVariantUI(selected);
+        }
+    });
 </script>
