@@ -45,20 +45,15 @@
                         <div class="mb-4">
                             <h5 class="fw-bold mb-3">Categories</h5>
                             <div class="list-group list-group-flush">
-                                <a
-                                    asp-page="/Products/Index"
-                                    asp-all-route-data="BuildRoute(1, null, Model.SortBy)"
-                                    class="list-group-item list-group-item-action @(string.IsNullOrEmpty(Model.SelectedCategory) ? "active" : "")"
-                                >
+                                <a asp-page="/Products/Index" asp-all-route-data="BuildRoute(1, null, Model.SortBy)"
+                                       class="list-group-item list-group-item-action @(string.IsNullOrEmpty(Model.SelectedCategory) ? "active" : "")">
                                     All Products
                                 </a>
                                 @foreach (var category in Model.Categories)
                                 {
-                                    <a
-                                        asp-page="/Products/Index"
-                                        asp-all-route-data="BuildRoute(1, category.Slug, Model.SortBy)"
-                                        class="list-group-item list-group-item-action @(Model.SelectedCategory == category.Slug ? "active" : "")"
-                                    >
+                                    <a asp-page="/Products/Index"
+                                           asp-all-route-data="BuildRoute(1, category.Slug, Model.SortBy)"
+                                           class="list-group-item list-group-item-action @(Model.SelectedCategory == category.Slug ? "active" : "")">
                                         @category.Name
                                     </a>
                                 }
@@ -71,32 +66,24 @@
                         <div>
                             <h5 class="fw-bold mb-3">Sort By</h5>
                             <div class="list-group list-group-flush">
-                                <a
-                                    asp-page="/Products/Index"
-                                    asp-all-route-data="BuildRoute(1, Model.SelectedCategory, null)"
-                                    class="list-group-item list-group-item-action @(string.IsNullOrEmpty(Model.SortBy) || Model.SortBy == "popularity" ? "active" : "")"
-                                >
+                                <a asp-page="/Products/Index"
+                                       asp-all-route-data="BuildRoute(1, Model.SelectedCategory, null)"
+                                       class="list-group-item list-group-item-action @(string.IsNullOrEmpty(Model.SortBy) || Model.SortBy == "popularity" ? "active" : "")">
                                     Most Popular
                                 </a>
-                                <a
-                                    asp-page="/Products/Index"
-                                    asp-all-route-data='BuildRoute(1, Model.SelectedCategory, "price_low")'
-                                    class="list-group-item list-group-item-action @(Model.SortBy == "price_low" ? "active" : "")"
-                                >
+                                <a asp-page="/Products/Index"
+                                       asp-all-route-data='BuildRoute(1, Model.SelectedCategory, "price_low")'
+                                       class="list-group-item list-group-item-action @(Model.SortBy == "price_low" ? "active" : "")">
                                     Price: Low to High
                                 </a>
-                                <a
-                                    asp-page="/Products/Index"
-                                    asp-all-route-data='BuildRoute(1, Model.SelectedCategory, "price_high")'
-                                    class="list-group-item list-group-item-action @(Model.SortBy == "price_high" ? "active" : "")"
-                                >
+                                <a asp-page="/Products/Index"
+                                       asp-all-route-data='BuildRoute(1, Model.SelectedCategory, "price_high")'
+                                       class="list-group-item list-group-item-action @(Model.SortBy == "price_high" ? "active" : "")">
                                     Price: High to Low
                                 </a>
-                                <a
-                                    asp-page="/Products/Index"
-                                    asp-all-route-data='BuildRoute(1, Model.SelectedCategory, "rating")'
-                                    class="list-group-item list-group-item-action @(Model.SortBy == "rating" ? "active" : "")"
-                                >
+                                <a asp-page="/Products/Index"
+                                       asp-all-route-data='BuildRoute(1, Model.SelectedCategory, "rating")'
+                                       class="list-group-item list-group-item-action @(Model.SortBy == "rating" ? "active" : "")">
                                     Highest Rated
                                 </a>
                             </div>
@@ -123,8 +110,12 @@
 
                     <!-- Product Count Info -->
                     <div class="d-flex justify-content-end my-4">
+                        @{
+                            int startItem = (Model.CurrentPage - 1) * Model.PageSize + 1;
+                            int endItem = Math.Min(Model.CurrentPage * Model.PageSize, Model.TotalCount);
+                        }
                         <small class="text-muted">
-                            Showing @((Model.CurrentPage - 1) * Model.PageSize + 1) - @Math.Min(Model.CurrentPage * Model.PageSize, Model.TotalCount) of @Model.TotalCount products
+                            Showing @startItem - @endItem of @Model.TotalCount products
                         </small>
                     </div>
 
@@ -137,11 +128,8 @@
                                 <li class="page-item @(Model.HasPreviousPage ? "" : "disabled")">
                                     @if (Model.HasPreviousPage)
                                     {
-                                        <a
-                                            class="page-link"
-                                            asp-page="/Products/Index"
-                                            asp-all-route-data="BuildRoute(Model.CurrentPage - 1, Model.SelectedCategory, Model.SortBy)"
-                                        >
+                                        <a class="page-link" asp-page="/Products/Index"
+                                               asp-all-route-data="BuildRoute(Model.CurrentPage - 1, Model.SelectedCategory, Model.SortBy)">
                                             Previous
                                         </a>
                                     }
@@ -159,11 +147,8 @@
                                     if (startPage > 1)
                                     {
                                         <li class="page-item">
-                                            <a
-                                                class="page-link"
-                                                asp-page="/Products/Index"
-                                                asp-all-route-data="BuildRoute(1, Model.SelectedCategory, Model.SortBy)"
-                                            >
+                                            <a class="page-link" asp-page="/Products/Index"
+                                                   asp-all-route-data="BuildRoute(1, Model.SelectedCategory, Model.SortBy)">
                                                 1
                                             </a>
                                         </li>
@@ -188,11 +173,8 @@
                                         else
                                         {
                                             <li class="page-item">
-                                                <a
-                                                    class="page-link"
-                                                    asp-page="/Products/Index"
-                                                    asp-all-route-data="BuildRoute(i, Model.SelectedCategory, Model.SortBy)"
-                                                >
+                                                <a class="page-link" asp-page="/Products/Index"
+                                                       asp-all-route-data="BuildRoute(i, Model.SelectedCategory, Model.SortBy)">
                                                     @i
                                                 </a>
                                             </li>
@@ -208,11 +190,8 @@
                                             </li>
                                         }
                                         <li class="page-item">
-                                            <a
-                                                class="page-link"
-                                                asp-page="/Products/Index"
-                                                asp-all-route-data="BuildRoute(Model.TotalPages, Model.SelectedCategory, Model.SortBy)"
-                                            >
+                                            <a class="page-link" asp-page="/Products/Index"
+                                                   asp-all-route-data="BuildRoute(Model.TotalPages, Model.SelectedCategory, Model.SortBy)">
                                                 @Model.TotalPages
                                             </a>
                                         </li>
@@ -223,11 +202,8 @@
                                 <li class="page-item @(Model.HasNextPage ? "" : "disabled")">
                                     @if (Model.HasNextPage)
                                     {
-                                        <a
-                                            class="page-link"
-                                            asp-page="/Products/Index"
-                                            asp-all-route-data="BuildRoute(Model.CurrentPage + 1, Model.SelectedCategory, Model.SortBy)"
-                                        >
+                                        <a class="page-link" asp-page="/Products/Index"
+                                               asp-all-route-data="BuildRoute(Model.CurrentPage + 1, Model.SelectedCategory, Model.SortBy)">
                                             Next
                                         </a>
                                     }
