@@ -1,0 +1,229 @@
+@page
+@model RetailCore.Customer.Pages.Products.IndexModel
+@{
+    ViewData["Title"] = "Products";
+}
+
+@functions {
+    public IDictionary<string, string> BuildRoute(int? p = null, string? category = null, string? sortBy = null)
+    {
+        var route = new Dictionary<string, string>();
+
+        if (p.HasValue && p.Value > 1)
+        {
+            route["p"] = p.Value.ToString();
+        }
+
+        if (!string.IsNullOrEmpty(category))
+        {
+            route["category"] = category;
+        }
+
+        if (!string.IsNullOrEmpty(sortBy) && sortBy != "popularity")
+        {
+            route["sortBy"] = sortBy;
+        }
+
+        return route;
+    }
+}
+
+<section class="py-5">
+    <div class="container-lg">
+        <!-- Header -->
+        <div class="mb-5">
+            <h1 class="display-5 fw-bold mb-2">Our Products</h1>
+            <p class="text-muted">Discover premium tech accessories for every need.</p>
+        </div>
+
+        <div class="row g-5">
+            <!-- Sidebar Filters -->
+            <div class="col-lg-3">
+                <div class="card position-sticky sticky-card" style="top: 20px">
+                    <div class="card-body">
+                        <!-- Categories Filter -->
+                        <div class="mb-4">
+                            <h5 class="fw-bold mb-3">Categories</h5>
+                            <div class="list-group list-group-flush">
+                                <a asp-page="/Products/Index" asp-all-route-data="BuildRoute(1, null, Model.SortBy)"
+                                       class="list-group-item list-group-item-action @(string.IsNullOrEmpty(Model.SelectedCategory) ? "active" : "")">
+                                    All Products
+                                </a>
+                                @foreach (var category in Model.Categories)
+                                {
+                                    <a asp-page="/Products/Index"
+                                           asp-all-route-data="BuildRoute(1, category.Slug, Model.SortBy)"
+                                           class="list-group-item list-group-item-action @(Model.SelectedCategory == category.Slug ? "active" : "")">
+                                        @category.Name
+                                    </a>
+                                }
+                            </div>
+                        </div>
+
+                        <hr />
+
+                        <!-- Sort Options -->
+                        <div>
+                            <h5 class="fw-bold mb-3">Sort By</h5>
+                            <div class="list-group list-group-flush">
+                                <a asp-page="/Products/Index"
+                                       asp-all-route-data="BuildRoute(1, Model.SelectedCategory, null)"
+                                       class="list-group-item list-group-item-action @(string.IsNullOrEmpty(Model.SortBy) || Model.SortBy == "popularity" ? "active" : "")">
+                                    Most Popular
+                                </a>
+                                <a asp-page="/Products/Index"
+                                       asp-all-route-data='BuildRoute(1, Model.SelectedCategory, "price_low")'
+                                       class="list-group-item list-group-item-action @(Model.SortBy == "price_low" ? "active" : "")">
+                                    Price: Low to High
+                                </a>
+                                <a asp-page="/Products/Index"
+                                       asp-all-route-data='BuildRoute(1, Model.SelectedCategory, "price_high")'
+                                       class="list-group-item list-group-item-action @(Model.SortBy == "price_high" ? "active" : "")">
+                                    Price: High to Low
+                                </a>
+                                <a asp-page="/Products/Index"
+                                       asp-all-route-data='BuildRoute(1, Model.SelectedCategory, "rating")'
+                                       class="list-group-item list-group-item-action @(Model.SortBy == "rating" ? "active" : "")">
+                                    Highest Rated
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Products Grid -->
+            <div class="col-lg-9">
+                @if (Model.Products.Any())
+                {
+                    <div class="row g-4">
+                        @foreach (var product in Model.Products)
+                        {
+                            <div class="col-md-6 col-lg-4">
+                                @{
+                                    ViewData["Product"] = product;
+                                }
+                                <partial name="Shared/ProductCard" />
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Product Count Info -->
+                    <div class="d-flex justify-content-end my-4">
+                        @{
+                            int startItem = (Model.CurrentPage - 1) * Model.PageSize + 1;
+                            int endItem = Math.Min(Model.CurrentPage * Model.PageSize, Model.TotalCount);
+                        }
+                        <small class="text-muted">
+                            Showing @startItem - @endItem of @Model.TotalCount products
+                        </small>
+                    </div>
+
+                    <!-- Pagination -->
+                    @if (Model.TotalPages > 1)
+                    {
+                        <nav aria-label="Page navigation" class="mt-3">
+                            <ul class="pagination justify-content-center">
+                                <!-- Previous Button -->
+                                <li class="page-item @(Model.HasPreviousPage ? "" : "disabled")">
+                                    @if (Model.HasPreviousPage)
+                                    {
+                                        <a class="page-link" asp-page="/Products/Index"
+                                               asp-all-route-data="BuildRoute(Model.CurrentPage - 1, Model.SelectedCategory, Model.SortBy)">
+                                            Previous
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <span class="page-link">Previous</span>
+                                    }
+                                </li>
+
+                                <!-- Page Numbers -->
+                                @{
+                                    int startPage = Math.Max(1, Model.CurrentPage - 2);
+                                    int endPage = Math.Min(Model.TotalPages, Model.CurrentPage + 2);
+
+                                    if (startPage > 1)
+                                    {
+                                        <li class="page-item">
+                                            <a class="page-link" asp-page="/Products/Index"
+                                                   asp-all-route-data="BuildRoute(1, Model.SelectedCategory, Model.SortBy)">
+                                                1
+                                            </a>
+                                        </li>
+                                        if (startPage > 2)
+                                        {
+                                            <li class="page-item disabled">
+                                                <span class="page-link">...</span>
+                                            </li>
+                                        }
+                                    }
+
+                                    for (int i = startPage; i <= endPage; i++)
+                                    {
+                                        if (i == Model.CurrentPage)
+                                        {
+                                            <li class="page-item active" aria-current="page">
+                                                <span class="page-link">
+                                                    @i <span class="visually-hidden">(current)</span>
+                                                </span>
+                                            </li>
+                                        }
+                                        else
+                                        {
+                                            <li class="page-item">
+                                                <a class="page-link" asp-page="/Products/Index"
+                                                       asp-all-route-data="BuildRoute(i, Model.SelectedCategory, Model.SortBy)">
+                                                    @i
+                                                </a>
+                                            </li>
+                                        }
+                                    }
+
+                                    if (endPage < Model.TotalPages)
+                                    {
+                                        if (endPage < Model.TotalPages - 1)
+                                        {
+                                            <li class="page-item disabled">
+                                                <span class="page-link">...</span>
+                                            </li>
+                                        }
+                                        <li class="page-item">
+                                            <a class="page-link" asp-page="/Products/Index"
+                                                   asp-all-route-data="BuildRoute(Model.TotalPages, Model.SelectedCategory, Model.SortBy)">
+                                                @Model.TotalPages
+                                            </a>
+                                        </li>
+                                    }
+                                }
+
+                                <!-- Next Button -->
+                                <li class="page-item @(Model.HasNextPage ? "" : "disabled")">
+                                    @if (Model.HasNextPage)
+                                    {
+                                        <a class="page-link" asp-page="/Products/Index"
+                                               asp-all-route-data="BuildRoute(Model.CurrentPage + 1, Model.SelectedCategory, Model.SortBy)">
+                                            Next
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <span class="page-link">Next</span>
+                                    }
+                                </li>
+                            </ul>
+                        </nav>
+                    }
+                }
+                else
+                {
+                    <div class="text-center py-5">
+                        <i class="fas fa-inbox display-6 text-muted mb-3"></i>
+                        <p class="text-muted fs-5">No products found.</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</section>
