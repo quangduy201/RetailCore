@@ -38,14 +38,33 @@
                          style="width: 100%; height: 100%; object-fit: cover;"
                          onerror="this.onerror=null; this.src='@placeholderUrl';" />
                 </div>
-                <div class="d-flex gap-2 flex-wrap">
-                    @foreach (var img in images)
-                    {
-                        <img src="@img" alt="Thumbnail" class="img-thumbnail"
-                             style="width: 80px; height: 80px; object-fit: cover; cursor: pointer;"
-                             onclick="document.getElementById('main-product-image').src='@img';"
-                             onerror="this.onerror=null; this.src='@placeholderUrl';" />
-                    }
+
+                
+                <div class="position-relative">
+                    <!-- Left arrow -->
+                    <button type="button"
+                            class="btn btn-light position-absolute top-50 start-0 translate-middle-y shadow-sm"
+                            style="z-index: 1;" onclick="scrollGallery(-1)">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+
+                    <!-- Scroll container -->
+                    <div id="thumbnail-scroll" class="d-flex gap-2 overflow-auto py-2" style="scroll-behavior: smooth;">
+                        @foreach (var img in images)
+                        {
+                            <img src="@img" alt="Thumbnail" class="img-thumbnail"
+                                 style="width: 80px; height: 80px; object-fit: cover; cursor: pointer;"
+                                 onclick="document.getElementById('main-product-image').src='@img';"
+                                 onerror="this.onerror=null; this.src='@placeholderUrl';" />
+                        }
+                    </div>
+
+                    <!-- Right arrow -->
+                    <button type="button"
+                            class="btn btn-light position-absolute top-50 end-0 translate-middle-y shadow-sm"
+                            style="z-index: 1;" onclick="scrollGallery(1)">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
                 </div>
             </div>
 
@@ -204,6 +223,28 @@
 </style>
 
 <script>
+
+    function scrollGallery(direction) {
+        const container = document.getElementById('thumbnail-scroll');
+        const itemWidth = 80; // 80px image
+        const scrollAmount = itemWidth * direction;
+
+        container.scrollBy({
+            left: scrollAmount,
+            behavior: 'smooth'
+        });
+    }
+
+    function updateArrows() {
+        const container = document.getElementById('thumbnail-scroll');
+        const leftBtn = document.querySelector('[onclick="scrollGallery(-1)"]');
+        const rightBtn = document.querySelector('[onclick="scrollGallery(1)"]');
+
+        leftBtn.style.opacity = container.scrollLeft > 0 ? 1 : 0.3;
+        rightBtn.style.opacity =
+            container.scrollLeft + container.clientWidth < container.scrollWidth ? 1 : 0.3;
+    }
+
     function increaseQuantity() {
         const input = document.getElementById('quantity-input');
         input.value = parseInt(input.value || '1') + 1;
@@ -267,6 +308,13 @@
         const selected = document.querySelector('input[name="variantId"]:checked');
         if (selected) {
             updateVariantUI(selected);
+        }
+
+        const thumbnailScroll = document.getElementById('thumbnail-scroll');
+        if (thumbnailScroll) {
+            thumbnailScroll.scrollLeft = 0;
+            updateArrows();
+            thumbnailScroll.addEventListener('scroll', updateArrows);
         }
     });
 </script>
