@@ -240,9 +240,8 @@
         const leftBtn = document.querySelector('[onclick="scrollGallery(-1)"]');
         const rightBtn = document.querySelector('[onclick="scrollGallery(1)"]');
 
-        leftBtn.style.opacity = container.scrollLeft > 0 ? 1 : 0.3;
-        rightBtn.style.opacity =
-            container.scrollLeft + container.clientWidth < container.scrollWidth ? 1 : 0.3;
+        leftBtn.style.opacity = container.scrollLeft > 0 ? 1 : 0;
+        rightBtn.style.opacity = container.scrollLeft + container.clientWidth < container.scrollWidth ? 1 : 0;
     }
 
     function increaseQuantity() {
