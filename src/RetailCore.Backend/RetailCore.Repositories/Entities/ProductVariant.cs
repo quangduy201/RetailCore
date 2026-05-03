@@ -1,4 +1,5 @@
 using RetailCore.Repositories.Common;
+using RetailCore.Shared.Enums;
 
 namespace RetailCore.Repositories.Entities;
 
@@ -26,11 +27,4 @@ public class ProductVariant : Entity, IAuditable
     public decimal? DiscountPercentage => CompareAtPrice.HasValue && CompareAtPrice > Price
         ? Math.Round(100 * (CompareAtPrice.Value - Price) / CompareAtPrice.Value, 2)
         : null;
-}
-
-public enum ProductVariantStatus
-{
-    Active = 1,
-    Inactive = 2,
-    Discontinued = 3
 }

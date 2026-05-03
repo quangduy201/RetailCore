@@ -1,4 +1,5 @@
 using RetailCore.Repositories.Common;
+using RetailCore.Shared.Enums;
 
 namespace RetailCore.Repositories.Entities;
 
@@ -23,12 +24,4 @@ public class Product : Entity, IAuditable
 
     public ICollection<ProductAttribute> Attributes { get; set; } = [];
     public ICollection<ProductVariant> Variants { get; set; } = [];
-}
-
-public enum ProductStatus
-{
-    Draft = 0,
-    Active = 1,
-    Inactive = 2,
-    Archived = 3
 }
