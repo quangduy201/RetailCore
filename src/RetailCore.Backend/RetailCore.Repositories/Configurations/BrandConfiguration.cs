@@ -4,11 +4,11 @@ using RetailCore.Repositories.Entities;
 
 namespace RetailCore.Repositories.Configurations;
 
-public class CategoryConfiguration : IEntityTypeConfiguration<Category>
+public class BrandConfiguration : IEntityTypeConfiguration<Brand>
 {
-    public void Configure(EntityTypeBuilder<Category> builder)
+    public void Configure(EntityTypeBuilder<Brand> builder)
     {
-        builder.ToTable("Categories");
+        builder.ToTable("Brands");
 
         builder.HasKey(x => x.Id);
 
