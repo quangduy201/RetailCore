@@ -22,8 +22,7 @@ public interface IProductRepository
     Task<Product?> GetByIdAsync(Guid id);
     Task<Product?> GetBySlugAsync(string slug);
     Task<Product?> GetByIdWithDetailsAsync(Guid id);
-    Task<Product?> GetBySlugWithDetailsAsync(Guid id);
-
+    Task<Product?> GetBySlugWithDetailsAsync(string slug);
     Task<bool> IsSlugUniqueAsync(string slug, Guid? excludeId = null);
     Task AddAsync(Product product);
     Task UpdateAsync(Product product);
