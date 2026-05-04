@@ -1,7 +1,10 @@
 using RetailCore.Repositories.Entities;
 using RetailCore.Repositories.Repositories.Interfaces;
 using RetailCore.Services.Interfaces;
+using RetailCore.Shared.Common;
 using RetailCore.Shared.DTOs.Category;
+using RetailCore.Shared.Enums;
+using RetailCore.Shared.Requests.Category;
 
 namespace RetailCore.Services.Implementations;
 
@@ -14,80 +17,122 @@ public class CategoryService : ICategoryService
         _repo = repo;
     }
 
-    public async Task<List<CategoryResponseDto>> GetAllAsync()
+    public async Task<PagedResult<CategorySummaryDto>> GetPagedAsync(GetCategoriesRequest request)
     {
-        var categories = await _repo.GetAllAsync();
+        var (items, totalCount) = await _repo.GetPagedAsync(
+            request.Keyword,
+            request.Status,
+            request.PageNumber,
+            request.PageSize);
 
-        return categories.Select(c => new CategoryResponseDto
+        var dtos = items.Select(c => new CategorySummaryDto
         {
             Id = c.Id,
             Name = c.Name,
-            Description = c.Description,
-            IsActive = c.IsActive
-        }).ToList();
-    }
+            Slug = c.Slug,
+            Description = c.Description
+        });
 
-    public async Task<CategoryResponseDto?> GetByIdAsync(Guid id)
-    {
-        var c = await _repo.GetByIdAsync(id);
-        if (c == null) return null;
-
-        return new CategoryResponseDto
+        return new PagedResult<CategorySummaryDto>
         {
-            Id = c.Id,
-            Name = c.Name,
-            Description = c.Description,
-            IsActive = c.IsActive
+            Items = dtos,
+            PageNumber = request.PageNumber,
+            PageSize = request.PageSize,
+            TotalCount = totalCount
         };
     }
 
-    public async Task<CategoryResponseDto> CreateAsync(CategoryCreateDto dto)
+    public async Task<PagedResult<CategoryDetailDto>> GetPagedForManagementAsync(GetCategoriesRequest request)
     {
+        var (items, totalCount) = await _repo.GetPagedAsync(
+            request.Keyword,
+            request.Status,
+            request.PageNumber,
+            request.PageSize);
+
+        var dtos = items.Select(MapToCategoryDetailDto);
+
+        return new PagedResult<CategoryDetailDto>
+        {
+            Items = dtos,
+            PageNumber = request.PageNumber,
+            PageSize = request.PageSize,
+            TotalCount = totalCount
+        };
+    }
+
+    public async Task<CategoryDetailDto> GetByIdAsync(Guid id)
+    {
+        var category = await _repo.GetByIdAsync(id)
+            ?? throw new KeyNotFoundException($"Category id '{id}' not found.");
+
+        return MapToCategoryDetailDto(category);
+    }
+
+    public async Task<CategoryDetailDto> GetBySlugAsync(string slug)
+    {
+        var category = await _repo.GetBySlugAsync(slug)
+            ?? throw new KeyNotFoundException($"Category slug '{slug}' not found.");
+
+        return MapToCategoryDetailDto(category);
+    }
+
+    public async Task<Guid> CreateAsync(CreateCategoryRequest request)
+    {
+        if (!await _repo.IsSlugUniqueAsync(request.Slug))
+            throw new InvalidOperationException($"Category slug '{request.Slug}' already exists.");
+
         var category = new Category
         {
             Id = Guid.NewGuid(),
-            Name = dto.Name,
-            Description = dto.Description,
-            IsActive = true,
+            Name = request.Name,
+            Slug = request.Slug,
+            Description = request.Description,
+            Status = CategoryStatus.Active,
             CreatedAt = DateTime.UtcNow
         };
 
         await _repo.AddAsync(category);
-        await _repo.SaveChangesAsync();
 
-        return new CategoryResponseDto
-        {
-            Id = category.Id,
-            Name = category.Name,
-            Description = category.Description,
-            IsActive = category.IsActive
-        };
+        return category.Id;
     }
 
-    public async Task<bool> UpdateAsync(Guid id, CategoryUpdateDto dto)
+    public async Task UpdateAsync(Guid id, UpdateCategoryRequest request)
     {
-        var category = await _repo.GetByIdAsync(id);
-        if (category == null) return false;
+        var category = await _repo.GetByIdAsync(id)
+            ?? throw new KeyNotFoundException($"Category id '{id}' not found.");
 
-        category.Name = dto.Name;
-        category.Description = dto.Description;
-        category.IsActive = dto.IsActive;
+        if (category.Slug != request.Slug && !await _repo.IsSlugUniqueAsync(request.Slug, id))
+            throw new InvalidOperationException($"Category slug '{request.Slug}' already exists.");
+
+        category.Name = request.Name;
+        category.Slug = request.Slug;
+        category.Description = request.Description;
+        category.Status = request.Status;
         category.UpdatedAt = DateTime.UtcNow;
 
-        _repo.Update(category);
-        await _repo.SaveChangesAsync();
-
-        return true;
+        await _repo.UpdateAsync(category);
     }
 
-    public async Task<bool> DeleteAsync(Guid id)
+    public async Task DeleteAsync(Guid id)
     {
-        var category = await _repo.GetByIdAsync(id);
-        if (category == null) return false;
+        var category = await _repo.GetByIdAsync(id)
+            ?? throw new KeyNotFoundException($"Category id '{id}' not found.");
 
-        _repo.Delete(category);
-        await _repo.SaveChangesAsync();
+        await _repo.DeleteAsync(category);
+    }
 
-        return true;
+    public static CategoryDetailDto MapToCategoryDetailDto(Category c)
+    {
+        return new CategoryDetailDto
+        {
+            Id = c.Id,
+            Name = c.Name,
+            Slug = c.Slug,
+            Description = c.Description,
+            Status = c.Status,
+            CreatedAt = c.CreatedAt,
+            UpdatedAt = c.UpdatedAt,
+        };
     }
 }
