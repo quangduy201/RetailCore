@@ -45,7 +45,7 @@ public class ProductVariantService : IProductVariantService
         if (!await _variantRepo.IsSkuUniqueAsync(request.Sku))
             throw new InvalidOperationException($"SKU '{request.Sku}' already exists.");
 
-        if (await ValidateVariantCombinationAsync(productId, request.AttributeValueIds))
+        if (!await ValidateVariantCombinationAsync(productId, request.AttributeValueIds))
             throw new InvalidOperationException("A variant with this attribute combination already exists for this product.");
 
         var variant = new ProductVariant
