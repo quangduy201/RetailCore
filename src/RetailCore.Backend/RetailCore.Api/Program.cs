@@ -1,3 +1,5 @@
+using RetailCore.Api.Middleware;
+using RetailCore.Api.Options;
 using RetailCore.Repositories.Options;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,7 +18,25 @@ builder.Services.AddRepositories(dbOptions);
 builder.Services.AddServices();
 builder.Services.AddControllers();
 
+// CORS
+var corsOptions = builder.Configuration
+    .GetSection("Cors")
+    .Get<CorsOptions>()
+    ?? throw new InvalidOperationException("CORS config missing");
+
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.WithOrigins(corsOptions.AllowedOrigins)
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
 var app = builder.Build();
+
+app.UseMiddleware<ExceptionMiddleware>();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -25,8 +45,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.MapControllers();
-
 app.UseHttpsRedirection();
+
+app.UseCors();
+
+app.MapControllers();
 
 app.Run();
