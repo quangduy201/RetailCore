@@ -127,7 +127,7 @@ public class BrandService : IBrandService
     public async Task DeleteAsync(Guid id)
     {
         var brand = await _repo.GetByIdAsync(id)
-            ?? throw new Exception($"Brand id '{id}' not found.");
+            ?? throw new KeyNotFoundException($"Brand id '{id}' not found.");
 
         await _repo.DeleteAsync(brand);
     }
