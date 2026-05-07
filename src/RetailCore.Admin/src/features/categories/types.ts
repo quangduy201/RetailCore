@@ -1,9 +1,5 @@
-import type {
-  DateTime,
-  PaginationRequest,
-  UUID,
-} from "../../shared/types/common";
-import type { CategoryStatus } from "../../shared/types/enums";
+import type { DateTime, PaginationRequest, UUID } from "@/shared/types/common";
+import type { CategoryStatus } from "@/shared/types/enums";
 
 export interface CategorySummaryDto {
   id: UUID;

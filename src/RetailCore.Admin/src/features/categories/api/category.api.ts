@@ -1,5 +1,5 @@
-import { http } from "../../../shared/services/http";
-import type { PagedResult, UUID } from "../../../shared/types/common";
+import { http } from "@/shared/services/http";
+import type { PagedResult, UUID } from "@/shared/types/common";
 import type {
   GetCategoriesRequest,
   CategoryDetailDto,

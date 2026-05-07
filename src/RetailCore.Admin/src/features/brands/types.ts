@@ -1,9 +1,5 @@
-import type {
-  DateTime,
-  PaginationRequest,
-  UUID,
-} from "../../shared/types/common";
-import type { BrandStatus } from "../../shared/types/enums";
+import type { DateTime, PaginationRequest, UUID } from "@/shared/types/common";
+import type { BrandStatus } from "@/shared/types/enums";
 
 export interface BrandSummaryDto {
   id: UUID;

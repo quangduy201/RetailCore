@@ -1,6 +1,6 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import AdminLayout from "../layouts/AdminLayout";
-import { adminRoutes } from "../shared/routes/adminRoutes";
+import AdminLayout from "@/layouts/AdminLayout";
+import { adminRoutes } from "@/shared/routes/adminRoutes";
 
 export default function App() {
   return (

@@ -1,12 +1,5 @@
-import type {
-  DateTime,
-  PaginationRequest,
-  UUID,
-} from "../../shared/types/common";
-import type {
-  ProductStatus,
-  ProductVariantStatus,
-} from "../../shared/types/enums";
+import type { DateTime, PaginationRequest, UUID } from "@/shared/types/common";
+import type { ProductStatus, ProductVariantStatus } from "@/shared/types/enums";
 
 // Attribute Value
 export interface ProductAttributeValueDto {
