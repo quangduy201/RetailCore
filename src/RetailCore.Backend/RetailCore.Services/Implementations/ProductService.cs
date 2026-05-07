@@ -78,6 +78,8 @@ public class ProductService : IProductService
             BrandName = p.Brand.Name,
             CategoryId = p.CategoryId,
             CategoryName = p.Category.Name,
+            Description = p.Description,
+            ShortDescription = p.ShortDescription,
             Status = p.Status,
             VariantCount = p.Variants.Count,
             Stock = p.Variants.Sum(v => v.Stock),
