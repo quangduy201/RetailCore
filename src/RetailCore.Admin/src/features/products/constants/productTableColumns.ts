@@ -100,18 +100,3 @@ export const PRODUCT_TABLE_COLUMNS: ProductTableColumn[] = [
     minWidth: 120,
   },
 ];
-
-export const DEFAULT_VISIBLE_PRODUCT_COLUMNS: ProductColumnKey[] = [
-  "thumbnail",
-  "name",
-  "brandName",
-  "categoryName",
-  "shortDescription",
-  "description",
-  "status",
-  "variantCount",
-  "stock",
-  "priceRange",
-  "createdAt",
-  "actions",
-];

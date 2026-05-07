@@ -13,20 +13,16 @@ import {
   PackageSearch,
 } from "lucide-react";
 
+import { getPageNumbers } from "@/shared/utils/pagination";
 import { ProductStatusBadge } from "../common/StatusBadges";
-
 import {
   PRODUCT_TABLE_COLUMNS,
   type ProductColumnKey,
 } from "../../constants/productTableColumns";
 import type { ProductManagementDto } from "../../types";
 import { formatPrice } from "../../utils/priceFormatter";
-import { getPageNumbers } from "../../utils/pagination";
 
 const PAGE_SIZE_OPTIONS = [
-  { id: "1", name: "1 / page" },
-  { id: "2", name: "2 / page" },
-  { id: "5", name: "5 / page" },
   { id: "10", name: "10 / page" },
   { id: "20", name: "20 / page" },
   { id: "50", name: "50 / page" },
