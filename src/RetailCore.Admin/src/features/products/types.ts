@@ -1,4 +1,8 @@
-import type { DateTime, UUID } from "../../shared/types/common";
+import type {
+  DateTime,
+  PaginationRequest,
+  UUID,
+} from "../../shared/types/common";
 import type {
   ProductStatus,
   ProductVariantStatus,
@@ -37,11 +41,11 @@ export interface ProductVariantImageDto {
 export interface ProductVariantDto {
   id: UUID;
   sku: string;
-  name?: string;
-  description?: string;
+  name?: string | null;
+  description?: string | null;
   price: number;
-  compareAtPrice?: number;
-  discountPercentage?: number;
+  compareAtPrice?: number | null;
+  discountPercentage?: number | null;
   stock: number;
   status: ProductVariantStatus;
   images: ProductVariantImageDto[];
@@ -53,8 +57,8 @@ export interface ProductDetailDto {
   id: UUID;
   name: string;
   slug: string;
-  shortDescription?: string;
-  description?: string;
+  shortDescription?: string | null;
+  description?: string | null;
 
   brandId: UUID;
   brandName: string;
@@ -75,8 +79,8 @@ export interface ProductManagementDto {
   id: UUID;
   name: string;
   slug: string;
-  shortDescription?: string;
-  description?: string;
+  shortDescription?: string | null;
+  description?: string | null;
 
   brandId: UUID;
   brandName: string;
@@ -87,17 +91,24 @@ export interface ProductManagementDto {
 
   variantCount: number;
   stock: number;
-  minPrice?: number;
-  maxPrice?: number;
-  thumbnailUrl?: string;
+  minPrice?: number | null;
+  maxPrice?: number | null;
+  thumbnailUrl?: string | null;
 
   createdAt: DateTime;
-  updatedAt?: DateTime;
+  updatedAt?: DateTime | null;
 }
 
 // Requests
 
-// Create Product
+// Product
+export interface GetProductsRequest extends PaginationRequest {
+  keyword?: string;
+  brandId?: UUID;
+  categoryId?: UUID;
+  status?: ProductStatus;
+}
+
 export interface CreateProductRequest {
   name: string;
   slug: string;
@@ -109,7 +120,6 @@ export interface CreateProductRequest {
   variants: CreateProductVariantRequest[];
 }
 
-// Update Product
 export interface UpdateProductRequest {
   name: string;
   slug: string;
@@ -174,18 +184,8 @@ export interface CreateProductVariantImageRequest {
 }
 
 export interface UpdateProductVariantImageRequest {
-  id?: UUID;
+  id?: UUID | null;
   url: string;
   sortOrder: number;
   isPrimary: boolean;
-}
-
-// Query
-export interface GetProductsRequest {
-  keyword?: string;
-  brandId?: UUID;
-  categoryId?: UUID;
-  status?: ProductStatus;
-  pageNumber?: number;
-  pageSize?: number;
 }

@@ -1,4 +1,8 @@
-import type { DateTime, UUID } from "../../shared/types/common";
+import type {
+  DateTime,
+  PaginationRequest,
+  UUID,
+} from "../../shared/types/common";
 import type { BrandStatus } from "../../shared/types/enums";
 
 export interface BrandSummaryDto {
@@ -11,13 +15,18 @@ export interface BrandDetailDto {
   id: UUID;
   name: string;
   slug: string;
-  description?: string;
+  description?: string | null;
   status: BrandStatus;
   createdAt: DateTime;
-  updatedAt?: DateTime;
+  updatedAt?: DateTime | null;
 }
 
 // Requests
+export interface GetBrandsRequest extends PaginationRequest {
+  keyword?: string;
+  status?: BrandStatus;
+}
+
 export interface CreateBrandRequest {
   name: string;
   slug: string;
@@ -29,11 +38,4 @@ export interface UpdateBrandRequest {
   slug: string;
   description?: string;
   status: BrandStatus;
-}
-
-export interface GetBrandsRequest {
-  keyword?: string;
-  status?: BrandStatus;
-  pageNumber?: number;
-  pageSize?: number;
 }

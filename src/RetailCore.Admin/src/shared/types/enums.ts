@@ -1,22 +1,25 @@
 export const CategoryStatus = {
-  Active: 0,
-  Inactive: 1,
+  Active: 1,
+  Inactive: 2,
+  Archived: 3,
 } as const;
 
 export const BrandStatus = {
-  Active: 0,
-  Inactive: 1,
-};
+  Active: 1,
+  Inactive: 2,
+} as const;
 
 export const ProductStatus = {
   Draft: 0,
-  Published: 1,
-  Archived: 2,
+  Active: 1,
+  Inactive: 2,
+  Archived: 3,
 } as const;
 
 export const ProductVariantStatus = {
-  Active: 0,
-  Inactive: 1,
+  Active: 1,
+  Inactive: 2,
+  Discontinued: 3,
 } as const;
 
 export type CategoryStatus =
