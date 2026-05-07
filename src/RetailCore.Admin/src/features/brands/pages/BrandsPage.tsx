@@ -81,17 +81,16 @@ export default function BrandsPage() {
 
           <div className="flex flex-col gap-3 sm:flex-row">
             <div className="min-w-72">
-              <SearchField>
+              <SearchField
+                value={searchTerm}
+                onChange={(value) => {
+                  setSearchTerm(value);
+                  setPageNumber(1);
+                }}
+              >
                 <SearchField.Group>
                   <SearchField.SearchIcon />
-                  <SearchField.Input
-                    placeholder="Search brands..."
-                    value={searchTerm}
-                    onChange={(e) => {
-                      setSearchTerm(e.target.value);
-                      setPageNumber(1);
-                    }}
-                  />
+                  <SearchField.Input placeholder="Search brands..." />
                   <SearchField.ClearButton />
                 </SearchField.Group>
               </SearchField>
