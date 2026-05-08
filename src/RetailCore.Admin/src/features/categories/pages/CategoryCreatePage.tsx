@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Form,
@@ -9,28 +9,35 @@ import {
   Button,
   Card,
   FieldError,
-  Description,
+  Switch,
 } from "@heroui/react";
 import { ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 
 import { categoryApi } from "../api/category.api";
-import { generateSlug } from "@/features/products/utils/slugGenerator";
 import type { CreateCategoryRequest } from "../types";
+import { useAutoSlug } from "@/shared/hooks/useAutoSlug";
 
 export default function CategoryCreatePage() {
   const navigate = useNavigate();
-  const formRef = useRef<HTMLFormElement>(null);
+
+  const [name, setName] = useState("");
+  const [slug, setSlug] = useState("");
+  const [description, setDescription] = useState("");
+
+  const { auto, handleSlugChange, enableAuto, disableAuto } = useAutoSlug({
+    name,
+    onSlugChange: setSlug,
+  });
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     try {
-      const formData = new FormData(e.currentTarget);
       const data: CreateCategoryRequest = {
-        name: (formData.get("name") as string) || "",
-        slug: (formData.get("slug") as string) || "",
-        description: (formData.get("description") as string) || undefined,
+        name: name,
+        slug: slug,
+        description: description || undefined,
       };
 
       await categoryApi.create(data);
@@ -39,22 +46,6 @@ export default function CategoryCreatePage() {
     } catch (error) {
       console.error("Failed to create category:", error);
       toast.error("Failed to create category. Please try again.");
-    }
-  };
-
-  const handleNameChange = () => {
-    const formElement = formRef.current;
-    if (formElement) {
-      const nameInput = formElement.querySelector(
-        'input[name="name"]',
-      ) as HTMLInputElement;
-      const slugInput = formElement.querySelector(
-        'input[name="slug"]',
-      ) as HTMLInputElement;
-
-      if (nameInput && slugInput && nameInput.value) {
-        slugInput.value = generateSlug(nameInput.value);
-      }
     }
   };
 
@@ -82,43 +73,62 @@ export default function CategoryCreatePage() {
       <Card className="border border-default-200">
         <div className="p-6">
           <Form
-            ref={formRef}
             className="space-y-6"
             onSubmit={handleSubmit}
             validationBehavior="aria"
           >
             {/* Name */}
-            <TextField isRequired className="w-full">
-              <Label className="text-sm font-semibold">Category Name</Label>
-              <Input
-                name="name"
-                placeholder="e.g., Laptops, Phones, Tablets"
-                onBlur={handleNameChange}
-              />
+            <TextField
+              isRequired
+              value={name}
+              onChange={setName}
+              className="w-full"
+            >
+              <Label>Category Name</Label>
+              <Input placeholder="e.g., Laptops, Phones, Tablets" />
               <FieldError className="text-xs" />
             </TextField>
 
             {/* Slug */}
-            <TextField isRequired className="w-full">
-              <Label className="text-sm font-semibold">Slug</Label>
-              <Input name="slug" placeholder="auto-generated from name" />
-              <Description className="text-xs text-default-500">
-                URL-friendly identifier (auto-generated)
-              </Description>
-              <FieldError className="text-xs" />
-            </TextField>
+            <div className="flex flex-row gap-3">
+              <TextField
+                isRequired
+                value={slug}
+                onChange={handleSlugChange}
+                className="flex-1"
+              >
+                <Label>Slug</Label>
+                <Input placeholder="url-friendly-identifier" />
+                <FieldError className="text-xs" />
+              </TextField>
+
+              <TextField className="pb-2">
+                <Label className="w-20">Auto slug</Label>
+                <Switch
+                  isSelected={auto}
+                  onChange={(checked) => {
+                    if (checked) enableAuto();
+                    else disableAuto();
+                  }}
+                >
+                  <Switch.Control>
+                    <Switch.Thumb />
+                  </Switch.Control>
+                </Switch>
+              </TextField>
+            </div>
 
             {/* Description */}
-            <TextField className="w-full">
-              <Label className="text-sm font-semibold">Description</Label>
+            <TextField
+              value={description}
+              onChange={setDescription}
+              className="w-full"
+            >
+              <Label>Description</Label>
               <TextArea
-                name="description"
                 placeholder="Add a description for this category (optional)"
                 rows={4}
               />
-              <Description className="text-xs text-default-500">
-                Provide details about the category
-              </Description>
             </TextField>
 
             {/* Actions */}

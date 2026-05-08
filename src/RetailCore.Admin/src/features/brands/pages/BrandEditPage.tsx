@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Form,
@@ -11,17 +11,17 @@ import {
   Select,
   Spinner,
   FieldError,
-  Description,
   ListBox,
+  Switch,
 } from "@heroui/react";
 import { ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 
 import { brandApi } from "../api/brand.api";
-import { generateSlug } from "@/features/products/utils/slugGenerator";
 import { BrandStatus } from "@/shared/types/enums";
 import type { BrandDetailDto, UpdateBrandRequest } from "../types";
 import type { UUID } from "@/shared/types/common";
+import { useAutoSlug } from "@/shared/hooks/useAutoSlug";
 
 const BRAND_STATUS_OPTIONS = [
   { key: BrandStatus.Active, name: "Active" },
@@ -31,11 +31,22 @@ const BRAND_STATUS_OPTIONS = [
 export default function BrandEditPage() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const formRef = useRef<HTMLFormElement>(null);
 
   const [brand, setBrand] = useState<BrandDetailDto | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [name, setName] = useState(brand?.name ?? "");
+  const [slug, setSlug] = useState(brand?.slug ?? "");
+  const [description, setDescription] = useState(brand?.description ?? "");
+  const [status, setStatus] = useState<BrandStatus>(
+    brand?.status ?? BrandStatus.Inactive,
+  );
+
+  const { auto, handleSlugChange, enableAuto, disableAuto } = useAutoSlug({
+    name,
+    onSlugChange: setSlug,
+  });
 
   useEffect(() => {
     const loadBrand = async () => {
@@ -49,6 +60,11 @@ export default function BrandEditPage() {
         setIsLoading(true);
         const data = await brandApi.getById(id as UUID);
         setBrand(data);
+
+        setName(data.name);
+        setSlug(data.slug);
+        setDescription(data.description ?? "");
+        setStatus(data.status);
       } catch (error) {
         console.error("Failed to load brand:", error);
         toast.error("Failed to load brand details");
@@ -68,13 +84,11 @@ export default function BrandEditPage() {
 
     try {
       setIsSubmitting(true);
-      const formData = new FormData(e.currentTarget);
       const data: UpdateBrandRequest = {
-        name: (formData.get("name") as string) || "",
-        slug: (formData.get("slug") as string) || "",
-        description: (formData.get("description") as string) || undefined,
-        status: (Number(formData.get("status")) ||
-          BrandStatus.Active) as BrandStatus,
+        name: name,
+        slug: slug,
+        description: description,
+        status: status,
       };
 
       await brandApi.update(brand.id, data);
@@ -85,22 +99,6 @@ export default function BrandEditPage() {
       toast.error("Failed to update brand. Please try again.");
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const handleNameChange = () => {
-    const formElement = formRef.current;
-    if (formElement) {
-      const nameInput = formElement.querySelector(
-        'input[name="name"]',
-      ) as HTMLInputElement;
-      const slugInput = formElement.querySelector(
-        'input[name="slug"]',
-      ) as HTMLInputElement;
-
-      if (nameInput && slugInput && nameInput.value) {
-        slugInput.value = generateSlug(nameInput.value);
-      }
     }
   };
 
@@ -142,51 +140,67 @@ export default function BrandEditPage() {
       <Card className="border border-default-200">
         <div className="p-6">
           <Form
-            ref={formRef}
             className="space-y-6"
             onSubmit={handleSubmit}
             validationBehavior="aria"
           >
             {/* Name */}
-            <TextField isRequired className="w-full" defaultValue={brand.name}>
-              <Label className="text-sm font-semibold">Brand Name</Label>
-              <Input
-                name="name"
-                placeholder="e.g., Apple, Samsung, Dell"
-                onBlur={handleNameChange}
-              />
+            <TextField
+              isRequired
+              value={name}
+              onChange={setName}
+              className="w-full"
+            >
+              <Label>Brand Name</Label>
+              <Input placeholder="e.g., Apple, Samsung, Dell" />
               <FieldError className="text-xs" />
             </TextField>
 
             {/* Slug */}
-            <TextField isRequired className="w-full" defaultValue={brand.slug}>
-              <Label className="text-sm font-semibold">Slug</Label>
-              <Input name="slug" placeholder="url-friendly-identifier" />
-              <Description className="text-xs text-default-500">
-                URL-friendly identifier
-              </Description>
-              <FieldError className="text-xs" />
-            </TextField>
+            <div className="flex flex-row gap-3">
+              <TextField
+                isRequired
+                className="flex-1"
+                value={slug}
+                onChange={handleSlugChange}
+              >
+                <Label>Slug</Label>
+                <Input placeholder="url-friendly-identifier" />
+                <FieldError className="text-xs" />
+              </TextField>
+
+              <TextField className="pb-2">
+                <Label className="w-20">Auto slug</Label>
+                <Switch
+                  isSelected={auto}
+                  onChange={(checked) => {
+                    if (checked) enableAuto();
+                    else disableAuto();
+                  }}
+                >
+                  <Switch.Control>
+                    <Switch.Thumb />
+                  </Switch.Control>
+                </Switch>
+              </TextField>
+            </div>
 
             {/* Description */}
-            <TextField
-              className="w-full"
-              defaultValue={brand.description ?? ""}
-            >
-              <Label className="text-sm font-semibold">Description</Label>
+            <TextField className="w-full" value={description}>
+              <Label>Description</Label>
               <TextArea
-                name="description"
                 placeholder="Add a description for this brand"
                 rows={4}
               />
-              <Description className="text-xs text-default-500">
-                Provide details about the brand
-              </Description>
             </TextField>
 
             {/* Status */}
-            <Select name="status" isRequired defaultValue={brand.status}>
-              <Label className="text-sm font-semibold">Status</Label>
+            <Select
+              isRequired
+              value={status}
+              onChange={(value) => setStatus(value as BrandStatus)}
+            >
+              <Label>Status</Label>
               <Select.Trigger>
                 <Select.Value />
                 <Select.Indicator />

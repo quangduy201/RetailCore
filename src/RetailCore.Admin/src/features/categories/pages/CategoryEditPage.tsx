@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Form,
@@ -13,15 +13,16 @@ import {
   FieldError,
   Description,
   ListBox,
+  Switch,
 } from "@heroui/react";
 import { ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 
 import { categoryApi } from "../api/category.api";
-import { generateSlug } from "@/features/products/utils/slugGenerator";
 import { CategoryStatus } from "@/shared/types/enums";
 import type { CategoryDetailDto, UpdateCategoryRequest } from "../types";
 import type { UUID } from "@/shared/types/common";
+import { useAutoSlug } from "@/shared/hooks/useAutoSlug";
 
 const CATEGORY_STATUS_OPTIONS = [
   { key: CategoryStatus.Active, name: "Active" },
@@ -32,11 +33,22 @@ const CATEGORY_STATUS_OPTIONS = [
 export default function CategoryEditPage() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const formRef = useRef<HTMLFormElement>(null);
 
   const [category, setCategory] = useState<CategoryDetailDto | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [name, setName] = useState(category?.name ?? "");
+  const [slug, setSlug] = useState(category?.slug ?? "");
+  const [description, setDescription] = useState(category?.description ?? "");
+  const [status, setStatus] = useState<CategoryStatus>(
+    category?.status ?? CategoryStatus.Inactive,
+  );
+
+  const { auto, handleSlugChange, enableAuto, disableAuto } = useAutoSlug({
+    name,
+    onSlugChange: setSlug,
+  });
 
   useEffect(() => {
     const loadCategory = async () => {
@@ -50,6 +62,11 @@ export default function CategoryEditPage() {
         setIsLoading(true);
         const data = await categoryApi.getById(id as UUID);
         setCategory(data);
+
+        setName(data.name);
+        setSlug(data.slug);
+        setDescription(data.description ?? "");
+        setStatus(data.status);
       } catch (error) {
         console.error("Failed to load category:", error);
         toast.error("Failed to load category details");
@@ -69,13 +86,11 @@ export default function CategoryEditPage() {
 
     try {
       setIsSubmitting(true);
-      const formData = new FormData(e.currentTarget);
       const data: UpdateCategoryRequest = {
-        name: (formData.get("name") as string) || "",
-        slug: (formData.get("slug") as string) || "",
-        description: (formData.get("description") as string) || undefined,
-        status: (Number(formData.get("status") as string) ||
-          CategoryStatus.Active) as CategoryStatus,
+        name: name,
+        slug: slug,
+        description: description || undefined,
+        status: status,
       };
 
       await categoryApi.update(category.id, data);
@@ -86,22 +101,6 @@ export default function CategoryEditPage() {
       toast.error("Failed to update category. Please try again.");
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const handleNameChange = () => {
-    const formElement = formRef.current;
-    if (formElement) {
-      const nameInput = formElement.querySelector(
-        'input[name="name"]',
-      ) as HTMLInputElement;
-      const slugInput = formElement.querySelector(
-        'input[name="slug"]',
-      ) as HTMLInputElement;
-
-      if (nameInput && slugInput && nameInput.value) {
-        slugInput.value = generateSlug(nameInput.value);
-      }
     }
   };
 
@@ -145,7 +144,6 @@ export default function CategoryEditPage() {
       <Card className="border border-default-200">
         <div className="p-6">
           <Form
-            ref={formRef}
             className="space-y-6"
             onSubmit={handleSubmit}
             validationBehavior="aria"
@@ -153,51 +151,71 @@ export default function CategoryEditPage() {
             {/* Name */}
             <TextField
               isRequired
+              value={name}
+              onChange={setName}
               className="w-full"
-              defaultValue={category.name}
             >
-              <Label className="text-sm font-semibold">Category Name</Label>
-              <Input
-                name="name"
-                placeholder="e.g., Laptops, Phones, Tablets"
-                onBlur={handleNameChange}
-              />
+              <Label>Category Name</Label>
+              <Input placeholder="e.g., Laptops, Phones, Tablets" />
               <FieldError className="text-xs" />
             </TextField>
 
             {/* Slug */}
-            <TextField
-              isRequired
-              className="w-full"
-              defaultValue={category.slug}
-            >
-              <Label className="text-sm font-semibold">Slug</Label>
-              <Input name="slug" placeholder="url-friendly-identifier" />
-              <Description className="text-xs text-default-500">
-                URL-friendly identifier
-              </Description>
-              <FieldError className="text-xs" />
-            </TextField>
+            <div className="flex flex-row gap-3">
+              <TextField
+                isRequired
+                value={slug}
+                onChange={handleSlugChange}
+                className="flex-1"
+              >
+                <Label>Slug</Label>
+
+                <Input placeholder="url-friendly-identifier" />
+
+                <Description className="text-xs text-default-500">
+                  URL-friendly identifier
+                </Description>
+
+                <FieldError className="text-xs" />
+              </TextField>
+
+              <TextField className="pb-2">
+                <Label className="w-20">Auto slug</Label>
+
+                <Switch
+                  isSelected={auto}
+                  onChange={(checked) => {
+                    if (checked) enableAuto();
+                    else disableAuto();
+                  }}
+                >
+                  <Switch.Control>
+                    <Switch.Thumb />
+                  </Switch.Control>
+                </Switch>
+              </TextField>
+            </div>
 
             {/* Description */}
             <TextField
+              value={description}
+              onChange={setDescription}
               className="w-full"
-              defaultValue={category.description ?? ""}
             >
-              <Label className="text-sm font-semibold">Description</Label>
+              <Label>Description</Label>
               <TextArea
-                name="description"
                 placeholder="Add a description for this category"
                 rows={4}
               />
-              <Description className="text-xs text-default-500">
-                Provide details about the category
-              </Description>
             </TextField>
 
             {/* Status */}
-            <Select name="status" isRequired defaultValue={category.status}>
-              <Label className="text-sm font-semibold">Status</Label>
+            <Select
+              isRequired
+              value={status}
+              onChange={(value) => setStatus(value as CategoryStatus)}
+            >
+              <Label>Status</Label>
               <Select.Trigger>
                 <Select.Value />
                 <Select.Indicator />

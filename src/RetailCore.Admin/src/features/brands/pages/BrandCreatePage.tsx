@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Form,
@@ -9,28 +9,35 @@ import {
   Button,
   Card,
   FieldError,
-  Description,
+  Switch,
 } from "@heroui/react";
 import { ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 
 import { brandApi } from "../api/brand.api";
-import { generateSlug } from "@/features/products/utils/slugGenerator";
 import type { CreateBrandRequest } from "../types";
+import { useAutoSlug } from "@/shared/hooks/useAutoSlug";
 
 export default function BrandCreatePage() {
   const navigate = useNavigate();
-  const formRef = useRef<HTMLFormElement>(null);
+
+  const [name, setName] = useState("");
+  const [slug, setSlug] = useState("");
+  const [description, setDescription] = useState("");
+
+  const { auto, handleSlugChange, enableAuto, disableAuto } = useAutoSlug({
+    name,
+    onSlugChange: setSlug,
+  });
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     try {
-      const formData = new FormData(e.currentTarget);
       const data: CreateBrandRequest = {
-        name: (formData.get("name") as string) || "",
-        slug: (formData.get("slug") as string) || "",
-        description: (formData.get("description") as string) || undefined,
+        name: name,
+        slug: slug,
+        description: description ?? undefined,
       };
 
       await brandApi.create(data);
@@ -39,22 +46,6 @@ export default function BrandCreatePage() {
     } catch (error) {
       console.error("Failed to create brand:", error);
       toast.error("Failed to create brand. Please try again.");
-    }
-  };
-
-  const handleNameChange = () => {
-    const formElement = formRef.current;
-    if (formElement) {
-      const nameInput = formElement.querySelector(
-        'input[name="name"]',
-      ) as HTMLInputElement;
-      const slugInput = formElement.querySelector(
-        'input[name="slug"]',
-      ) as HTMLInputElement;
-
-      if (nameInput && slugInput && nameInput.value) {
-        slugInput.value = generateSlug(nameInput.value);
-      }
     }
   };
 
@@ -82,43 +73,59 @@ export default function BrandCreatePage() {
       <Card className="border border-default-200">
         <div className="p-6">
           <Form
-            ref={formRef}
             className="space-y-6"
             onSubmit={handleSubmit}
             validationBehavior="aria"
           >
             {/* Name */}
-            <TextField isRequired className="w-full">
-              <Label className="text-sm font-semibold">Brand Name</Label>
-              <Input
-                name="name"
-                placeholder="e.g., Apple, Samsung, Dell"
-                onBlur={handleNameChange}
-              />
+            <TextField
+              isRequired
+              value={name}
+              onChange={setName}
+              className="w-full"
+            >
+              <Label>Brand Name</Label>
+              <Input placeholder="e.g., Apple, Samsung, Dell" />
               <FieldError className="text-xs" />
             </TextField>
 
             {/* Slug */}
-            <TextField isRequired className="w-full">
-              <Label className="text-sm font-semibold">Slug</Label>
-              <Input name="slug" placeholder="auto-generated from name" />
-              <Description className="text-xs text-default-500">
-                URL-friendly identifier (auto-generated)
-              </Description>
-              <FieldError className="text-xs" />
-            </TextField>
+            <div className="flex flex-row gap-3">
+              <TextField
+                isRequired
+                className="flex-1"
+                value={slug}
+                onChange={handleSlugChange}
+              >
+                <Label>Slug</Label>
+                <Input placeholder="url-friendly-identifier" />
+                <FieldError className="text-xs" />
+              </TextField>
+
+              <TextField className="pb-2">
+                <Label className="w-20">Auto slug</Label>
+                <Switch
+                  isSelected={auto}
+                  onChange={(checked) => {
+                    if (checked) enableAuto();
+                    else disableAuto();
+                  }}
+                >
+                  <Switch.Control>
+                    <Switch.Thumb />
+                  </Switch.Control>
+                </Switch>
+              </TextField>
+            </div>
 
             {/* Description */}
-            <TextField className="w-full">
-              <Label className="text-sm font-semibold">Description</Label>
-              <TextArea
-                name="description"
-                placeholder="Add a description for this brand (optional)"
-                rows={4}
-              />
-              <Description className="text-xs text-default-500">
-                Provide details about the brand
-              </Description>
+            <TextField
+              value={description}
+              onChange={setDescription}
+              className="w-full"
+            >
+              <Label>Description</Label>
+              <TextArea placeholder="Optional brand description" rows={4} />
             </TextField>
 
             {/* Actions */}
