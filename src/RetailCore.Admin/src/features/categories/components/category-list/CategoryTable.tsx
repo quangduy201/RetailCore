@@ -88,11 +88,11 @@ export function CategoryTable({
         return <CategoryStatusBadge status={category.status} size="md" />;
 
       case "createdAt":
-        return new Date(category.createdAt).toLocaleString();
+        return new Date(`${category.createdAt}`).toLocaleString();
 
       case "updatedAt":
         return category.updatedAt
-          ? new Date(category.updatedAt).toLocaleString()
+          ? new Date(`${category.updatedAt}`).toLocaleString()
           : "—";
 
       case "actions":

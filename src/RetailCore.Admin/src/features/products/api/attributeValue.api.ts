@@ -4,7 +4,7 @@ import type {
   ProductAttributeValueDto,
   CreateProductAttributeValueRequest,
   UpdateProductAttributeValueRequest,
-} from "../types";
+} from "../types/types";
 
 const BASE_URL = "/admin/products";
 

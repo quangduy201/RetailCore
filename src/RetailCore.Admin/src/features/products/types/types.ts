@@ -59,6 +59,8 @@ export interface ProductDetailDto {
   categoryName: string;
 
   status: ProductStatus;
+  isFeatured: boolean;
+  isSetupCompleted: boolean;
 
   attributes: ProductAttributeDto[];
   variants: ProductVariantDto[];

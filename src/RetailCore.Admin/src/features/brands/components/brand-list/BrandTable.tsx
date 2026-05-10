@@ -85,11 +85,11 @@ export function BrandTable({
         return <BrandStatusBadge status={brand.status} size="md" />;
 
       case "createdAt":
-        return new Date(brand.createdAt).toLocaleString();
+        return new Date(`${brand.createdAt}Z`).toLocaleString();
 
       case "updatedAt":
         return brand.updatedAt
-          ? new Date(brand.updatedAt).toLocaleString()
+          ? new Date(`${brand.updatedAt}Z`).toLocaleString()
           : "—";
 
       case "actions":

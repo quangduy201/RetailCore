@@ -5,9 +5,10 @@ import { AlertCircle, Plus } from "lucide-react";
 
 import { productApi } from "../api/product.api";
 import { ProductTable } from "../components/product-list/ProductTable";
-import type { ProductManagementDto } from "../types";
+import type { ProductManagementDto } from "../types/types";
 
 import type { UUID } from "@/shared/types/common";
+import { toast } from "sonner";
 
 export default function ProductsPage() {
   const navigate = useNavigate();
@@ -65,9 +66,12 @@ export default function ProductsPage() {
     try {
       await productApi.delete(productId as UUID);
 
+      toast.success("Product deleted");
+
       await loadProducts();
-    } catch {
-      setError("Failed to delete product.");
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to delete product");
     }
   };
 
@@ -76,7 +80,7 @@ export default function ProductsPage() {
   };
 
   const handleEditProduct = (productId: string) => {
-    navigate(`/products/${productId}/edit`);
+    navigate(`/products/${productId}`);
   };
 
   return (

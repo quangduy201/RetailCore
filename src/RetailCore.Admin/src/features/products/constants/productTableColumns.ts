@@ -24,8 +24,8 @@ export const PRODUCT_TABLE_COLUMNS: ProductTableColumn[] = [
   {
     key: "thumbnail",
     label: "Thumbnail",
-    defaultWidth: 120,
-    minWidth: 120,
+    defaultWidth: 80,
+    minWidth: 80,
   },
   {
     key: "name",
@@ -96,7 +96,7 @@ export const PRODUCT_TABLE_COLUMNS: ProductTableColumn[] = [
   {
     key: "actions",
     label: "Actions",
-    defaultWidth: 120,
-    minWidth: 120,
+    defaultWidth: 80,
+    minWidth: 80,
   },
 ];

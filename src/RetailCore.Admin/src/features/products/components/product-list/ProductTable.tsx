@@ -2,15 +2,17 @@ import {
   Button,
   ListBox,
   Pagination,
+  Popover,
   Select,
   Spinner,
   Table,
 } from "@heroui/react";
 import {
   Image as ImageIcon,
-  Pencil,
   Trash2,
   PackageSearch,
+  Ellipsis,
+  Eye,
 } from "lucide-react";
 
 import { getPageNumbers } from "@/shared/utils/pagination";
@@ -19,7 +21,7 @@ import {
   PRODUCT_TABLE_COLUMNS,
   type ProductColumnKey,
 } from "../../constants/productTableColumns";
-import type { ProductManagementDto } from "../../types";
+import type { ProductManagementDto } from "../../types/types";
 import { formatPrice } from "../../utils/priceFormatter";
 
 const PAGE_SIZE_OPTIONS = [
@@ -82,8 +84,8 @@ export function ProductTable({
                 className="aspect-square w-full max-w-20 rounded-xl border border-default-200 object-cover"
               />
             ) : (
-              <div className="flex w-full max-w-20 items-center justify-center rounded-xl border border-dashed border-default-300 bg-default-100">
-                <ImageIcon className="size-5 text-default-400" />
+              <div className="aspect-square w-full max-w-20 flex items-center justify-center rounded-xl border border-dashed border-default-300 bg-default-100">
+                <ImageIcon className="size-8 text-default-400" />
               </div>
             )}
           </div>
@@ -163,33 +165,47 @@ export function ProductTable({
         );
 
       case "createdAt":
-        return new Date(product.createdAt).toLocaleString();
+        return new Date(`${product.createdAt}`).toLocaleString();
 
       case "updatedAt":
         return product.updatedAt
-          ? new Date(product.updatedAt).toLocaleString()
+          ? new Date(`${product.updatedAt}`).toLocaleString()
           : "—";
 
       case "actions":
         return (
-          <div className="flex flex-col items-stretch justify-end gap-2">
-            <Button
-              size="sm"
-              variant="secondary"
-              onPress={() => onEdit(product.id)}
-            >
-              <Pencil className="size-4" />
-              Edit
-            </Button>
+          <div className="flex justify-center items-end">
+            <Popover>
+              <Button isIconOnly size="sm" variant="secondary">
+                <Ellipsis />
+              </Button>
+              <Popover.Content className="max-w-64">
+                <Popover.Dialog className="p-3">
+                  <Popover.Arrow />
+                  <div className="flex flex-col gap-1">
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      className="w-full flex justify-start"
+                      onPress={() => onEdit(product.id)}
+                    >
+                      <Eye className="size-4" />
+                      View details
+                    </Button>
 
-            <Button
-              size="sm"
-              variant="danger-soft"
-              onPress={() => onDelete(product.id)}
-            >
-              <Trash2 className="size-4" />
-              Delete
-            </Button>
+                    <Button
+                      size="sm"
+                      variant="danger-soft"
+                      className="w-full flex justify-start"
+                      onPress={() => onDelete(product.id)}
+                    >
+                      <Trash2 className="size-4" />
+                      Delete
+                    </Button>
+                  </div>
+                </Popover.Dialog>
+              </Popover.Content>
+            </Popover>
           </div>
         );
 

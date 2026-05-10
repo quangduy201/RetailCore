@@ -4,7 +4,7 @@ import type {
   ProductVariantDto,
   CreateProductVariantRequest,
   UpdateProductVariantRequest,
-} from "../types";
+} from "../types/types";
 
 const BASE_URL = "/admin/products";
 
