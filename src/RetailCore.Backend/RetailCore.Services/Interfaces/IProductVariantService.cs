@@ -9,6 +9,8 @@ public interface IProductVariantService
     Task<ProductVariantDto> GetByIdAsync(Guid id);
     Task<Guid> CreateAsync(Guid productId, CreateProductVariantRequest request);
     Task UpdateAsync(Guid id, UpdateProductVariantRequest request);
-    Task DeleteAsync(Guid id);
-    Task<bool> ValidateVariantCombinationAsync(Guid productId, List<Guid> attributeValueIds);
+    Task DeleteDraftAsync(Guid id);
+    Task<bool> IsCombinationUniqueAsync(Guid productId, List<Guid> attributeValueIds);
+
+    Task RemoveAllVariantsAsync(Guid productId);
 }

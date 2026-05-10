@@ -1,5 +1,3 @@
-using RetailCore.Shared.Enums;
-
 namespace RetailCore.Shared.Requests.Product;
 
 public class UpdateProductRequest
@@ -12,5 +10,5 @@ public class UpdateProductRequest
     public Guid BrandId { get; set; }
     public Guid CategoryId { get; set; }
 
-    public ProductStatus Status { get; set; }
+    public List<ProductAttributeRequest> Attributes { get; set; } = [];
 }

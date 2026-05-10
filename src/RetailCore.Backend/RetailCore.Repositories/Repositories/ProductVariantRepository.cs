@@ -16,53 +16,71 @@ public class ProductVariantRepository : IProductVariantRepository
 
     public async Task<ProductVariant?> GetByIdAsync(Guid id)
     {
-        return await _context.ProductVariants
-            .Include(pv => pv.Images.OrderBy(i => i.SortOrder))
-            .Include(pv => pv.Attributes)
-                .ThenInclude(va => va.ProductAttributeValue)
-                    .ThenInclude(pav => pav.ProductAttribute)
+        return await BuildQuery()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(pv => pv.Id == id);
+    }
+
+    public async Task<ProductVariant?> GetTrackedByIdAsync(Guid id)
+    {
+        return await BuildQuery()
             .FirstOrDefaultAsync(pv => pv.Id == id);
     }
 
     public async Task<List<ProductVariant>> GetByProductIdAsync(Guid productId)
     {
-        return await _context.ProductVariants
+        return await BuildQuery()
+            .AsNoTracking()
             .Where(pv => pv.ProductId == productId)
-            .Include(pv => pv.Images.OrderBy(i => i.SortOrder))
-            .Include(pv => pv.Attributes)
-                .ThenInclude(va => va.ProductAttributeValue)
-                    .ThenInclude(pav => pav.ProductAttribute)
+            .ToListAsync();
+    }
+
+    public async Task<List<ProductVariant>> GetTrackedByProductIdAsync(Guid productId)
+    {
+        return await BuildQuery()
+            .Where(pv => pv.ProductId == productId)
             .ToListAsync();
     }
 
     public async Task<ProductVariant?> GetBySkuAsync(string sku)
     {
-        return await _context.ProductVariants
+        return await BuildQuery()
+            .AsNoTracking()
             .FirstOrDefaultAsync(pv => pv.Sku == sku);
     }
 
     public async Task<bool> IsSkuUniqueAsync(string sku, Guid? excludeId = null)
     {
         return !await _context.ProductVariants
-            .Where(pv => pv.Sku == sku && (excludeId == null || pv.Id != excludeId))
-            .AnyAsync();
+            .AnyAsync(v => v.Sku == sku && (!excludeId.HasValue || v.Id != excludeId.Value));
     }
 
     public async Task AddAsync(ProductVariant variant)
     {
         await _context.ProductVariants.AddAsync(variant);
-        await _context.SaveChangesAsync();
     }
 
-    public async Task UpdateAsync(ProductVariant variant)
+    public async void Update(ProductVariant variant)
     {
         _context.ProductVariants.Update(variant);
-        await _context.SaveChangesAsync();
     }
 
-    public async Task DeleteAsync(ProductVariant variant)
+    public async void Delete(ProductVariant variant)
     {
         _context.ProductVariants.Remove(variant);
-        await _context.SaveChangesAsync();
+    }
+
+    public async void DeleteRange(List<ProductVariant> variants)
+    {
+        _context.ProductVariants.RemoveRange(variants);
+    }
+
+    private IQueryable<ProductVariant> BuildQuery()
+    {
+        return _context.ProductVariants
+            .Include(v => v.Images.OrderBy(i => i.SortOrder))
+            .Include(v => v.Attributes)
+                .ThenInclude(a => a.ProductAttributeValue)
+                    .ThenInclude(v => v.ProductAttribute);
     }
 }

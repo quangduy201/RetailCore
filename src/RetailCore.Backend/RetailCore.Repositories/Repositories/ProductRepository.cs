@@ -92,17 +92,14 @@ public class ProductRepository : IProductRepository
 
     public async Task<Product?> GetByIdWithDetailsAsync(Guid id)
     {
-        return await _context.Products
+        return await BuildDetailsQuery()
             .AsNoTracking()
-            .Include(p => p.Brand)
-            .Include(p => p.Category)
-            .Include(p => p.Attributes)
-                .ThenInclude(pa => pa.Values)
-            .Include(p => p.Variants)
-                .ThenInclude(v => v.Images)
-            .Include(p => p.Variants)
-                .ThenInclude(v => v.Attributes)
-                    .ThenInclude(va => va.ProductAttributeValue)
+            .FirstOrDefaultAsync(p => p.Id == id);
+    }
+
+    public async Task<Product?> GetTrackedByIdWithDetailsAsync(Guid id)
+    {
+        return await BuildDetailsQuery()
             .FirstOrDefaultAsync(p => p.Id == id);
     }
 
@@ -115,17 +112,8 @@ public class ProductRepository : IProductRepository
 
     public async Task<Product?> GetBySlugWithDetailsAsync(string slug)
     {
-        return await _context.Products
+        return await BuildDetailsQuery()
             .AsNoTracking()
-            .Include(p => p.Brand)
-            .Include(p => p.Category)
-            .Include(p => p.Attributes)
-                .ThenInclude(pa => pa.Values)
-            .Include(p => p.Variants)
-                .ThenInclude(v => v.Images)
-            .Include(p => p.Variants)
-                .ThenInclude(v => v.Attributes)
-                    .ThenInclude(va => va.ProductAttributeValue)
             .FirstOrDefaultAsync(p => p.Slug == slug);
     }
 
@@ -138,18 +126,33 @@ public class ProductRepository : IProductRepository
     public async Task AddAsync(Product product)
     {
         await _context.Products.AddAsync(product);
-        await _context.SaveChangesAsync();
     }
 
-    public async Task UpdateAsync(Product product)
+    public void Update(Product product)
     {
         _context.Products.Update(product);
-        await _context.SaveChangesAsync();
     }
 
-    public async Task DeleteAsync(Product product)
+    public void Delete(Product product)
     {
         _context.Products.Remove(product);
-        await _context.SaveChangesAsync();
+    }
+
+    private IQueryable<Product> BuildDetailsQuery()
+    {
+        return _context.Products
+            .Include(p => p.Brand)
+            .Include(p => p.Category)
+
+            .Include(p => p.Attributes)
+                .ThenInclude(a => a.Values)
+
+            .Include(p => p.Variants)
+                .ThenInclude(v => v.Images)
+
+            .Include(p => p.Variants)
+                .ThenInclude(v => v.Attributes)
+                    .ThenInclude(a => a.ProductAttributeValue)
+                        .ThenInclude(v => v.ProductAttribute);
     }
 }

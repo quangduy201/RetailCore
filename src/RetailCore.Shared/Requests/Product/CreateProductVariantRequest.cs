@@ -13,5 +13,5 @@ public class CreateProductVariantRequest
     public ProductVariantStatus Status { get; set; }
 
     public List<Guid> AttributeValueIds { get; set; } = [];
-    public List<CreateProductVariantImageRequest> Images { get; set; } = [];
+    public List<ProductVariantImageRequest> Images { get; set; } = [];
 }

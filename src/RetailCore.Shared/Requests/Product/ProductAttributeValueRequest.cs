@@ -1,7 +1,7 @@
 namespace RetailCore.Shared.Requests.Product;
 
-public class UpdateProductAttributeValueRequest
+public class ProductAttributeValueRequest
 {
-    public Guid Id { get; set; }
+    public Guid? Id { get; set; }
     public string Value { get; set; } = default!;
 }

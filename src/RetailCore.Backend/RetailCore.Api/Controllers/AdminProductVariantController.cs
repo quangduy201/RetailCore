@@ -32,6 +32,18 @@ public class AdminProductVariantsController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create(Guid productId, [FromBody] CreateProductVariantRequest request)
     {
+        if (string.IsNullOrWhiteSpace(request.Sku))
+            throw new InvalidOperationException("SKU is required.");
+
+        if (request.Price < 0)
+            throw new InvalidOperationException("Price cannot be negative.");
+
+        if (request.Stock < 0)
+            throw new InvalidOperationException("Stock cannot be negative.");
+
+        if (request.AttributeValueIds.Count == 0)
+            throw new InvalidOperationException("Variant must contain attribute values.");
+
         var id = await _variantService.CreateAsync(productId, request);
         return CreatedAtAction(nameof(GetById), new { productId, id }, id);
     }
@@ -39,6 +51,18 @@ public class AdminProductVariantsController : ControllerBase
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateProductVariantRequest request)
     {
+        if (string.IsNullOrWhiteSpace(request.Sku))
+            throw new InvalidOperationException("SKU is required.");
+
+        if (request.Price < 0)
+            throw new InvalidOperationException("Price cannot be negative.");
+
+        if (request.Stock < 0)
+            throw new InvalidOperationException("Stock cannot be negative.");
+
+        if (request.AttributeValueIds.Count == 0)
+            throw new InvalidOperationException("Variant must contain attribute values.");
+
         await _variantService.UpdateAsync(id, request);
         return NoContent();
     }
@@ -46,7 +70,7 @@ public class AdminProductVariantsController : ControllerBase
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id)
     {
-        await _variantService.DeleteAsync(id);
+        await _variantService.DeleteDraftAsync(id);
         return NoContent();
     }
 }

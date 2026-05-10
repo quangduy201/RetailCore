@@ -36,7 +36,7 @@ public class ProductAttributeService : IProductAttributeService
         return MapToProductAttributeDto(attribute);
     }
 
-    public async Task<Guid> CreateAsync(Guid productId, CreateProductAttributeRequest request)
+    public async Task<Guid> CreateAsync(Guid productId, ProductAttributeRequest request)
     {
         _ = await _productRepo.GetByIdAsync(productId)
             ?? throw new KeyNotFoundException($"Product with ID {productId} not found.");
@@ -56,7 +56,7 @@ public class ProductAttributeService : IProductAttributeService
         return attribute.Id;
     }
 
-    public async Task UpdateAsync(Guid attributeId, UpdateProductAttributeRequest request)
+    public async Task UpdateAsync(Guid attributeId, ProductAttributeRequest request)
     {
         var attribute = await _attributeRepo.GetByIdAsync(attributeId)
             ?? throw new KeyNotFoundException($"Attribute id '{attributeId}' not found.");
@@ -92,7 +92,7 @@ public class ProductAttributeService : IProductAttributeService
         return MapToProductAttributeValueDto(value);
     }
 
-    public async Task<Guid> CreateValueAsync(Guid attributeId, CreateProductAttributeValueRequest request)
+    public async Task<Guid> CreateValueAsync(Guid attributeId, ProductAttributeValueRequest request)
     {
         var value = new ProductAttributeValue
         {
@@ -106,7 +106,7 @@ public class ProductAttributeService : IProductAttributeService
         return value.Id;
     }
 
-    public async Task UpdateValueAsync(Guid valueId, UpdateProductAttributeValueRequest request)
+    public async Task UpdateValueAsync(Guid valueId, ProductAttributeValueRequest request)
     {
         var value = await _valueRepo.GetByIdAsync(valueId)
             ?? throw new KeyNotFoundException($"Attribute value id '{valueId}' not found.");

@@ -29,7 +29,7 @@ public class ProductController : ControllerBase
     {
         var product = await _productService.GetByIdAsync(id);
         if (product.Status != ProductStatus.Active)
-            throw new KeyNotFoundException($"Product id '{id}' not found.");
+            return NotFound();
         return Ok(product);
     }
 
@@ -38,7 +38,7 @@ public class ProductController : ControllerBase
     {
         var product = await _productService.GetBySlugAsync(slug);
         if (product.Status != ProductStatus.Active)
-            throw new KeyNotFoundException($"Product slug '{slug}' not found.");
+            return NotFound();
         return Ok(product);
     }
 }
