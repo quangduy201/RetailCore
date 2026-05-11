@@ -1,11 +1,14 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RetailCore.Services.Interfaces;
+using RetailCore.Shared.Constants;
 using RetailCore.Shared.Requests.Product;
 
 namespace RetailCore.Api.Controllers;
 
 [ApiController]
 [Route("api/admin/products/{productId:guid}/variants")]
+[Authorize(Roles = RoleConstants.Admin)]
 public class AdminProductVariantsController : ControllerBase
 {
     private readonly IProductVariantService _variantService;

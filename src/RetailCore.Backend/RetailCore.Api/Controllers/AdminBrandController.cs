@@ -1,11 +1,14 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RetailCore.Services.Interfaces;
+using RetailCore.Shared.Constants;
 using RetailCore.Shared.Requests.Brand;
 
 namespace RetailCore.Api.Controllers;
 
 [ApiController]
 [Route("api/admin/brands")]
+[Authorize(Roles = RoleConstants.Admin)]
 public class AdminBrandController : ControllerBase
 {
     private readonly IBrandService _brandService;

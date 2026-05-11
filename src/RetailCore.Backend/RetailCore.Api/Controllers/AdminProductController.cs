@@ -1,5 +1,7 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RetailCore.Services.Interfaces;
+using RetailCore.Shared.Constants;
 using RetailCore.Shared.Enums;
 using RetailCore.Shared.Requests.Product;
 
@@ -7,6 +9,7 @@ namespace RetailCore.Api.Controllers;
 
 [ApiController]
 [Route("api/admin/products")]
+[Authorize(Roles = RoleConstants.Admin)]
 public class AdminProductController : ControllerBase
 {
     private readonly IProductService _productService;
