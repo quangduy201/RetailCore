@@ -266,9 +266,6 @@ namespace RetailCore.Repositories.Migrations
                     b.Property<Guid>("ProductAttributeValueId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uniqueidentifier");
-
                     b.HasKey("ProductVariantId", "ProductAttributeValueId");
 
                     b.HasIndex("ProductAttributeValueId");

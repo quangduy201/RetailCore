@@ -10,6 +10,6 @@ public class CreateProductRequest
     public Guid BrandId { get; set; }
     public Guid CategoryId { get; set; }
 
-    public List<CreateProductAttributeRequest> Attributes { get; set; } = [];
+    public List<ProductAttributeRequest> Attributes { get; set; } = [];
     public List<CreateProductVariantRequest> Variants { get; set; } = [];
 }

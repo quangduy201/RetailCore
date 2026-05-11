@@ -13,5 +13,5 @@ public class UpdateProductVariantRequest
     public ProductVariantStatus Status { get; set; }
 
     public List<Guid> AttributeValueIds { get; set; } = [];
-    public List<UpdateProductVariantImageRequest> Images { get; set; } = [];
+    public List<ProductVariantImageRequest> Images { get; set; } = [];
 }

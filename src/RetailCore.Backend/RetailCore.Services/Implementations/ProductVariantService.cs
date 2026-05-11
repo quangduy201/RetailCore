@@ -8,18 +8,18 @@ namespace RetailCore.Services.Implementations;
 
 public class ProductVariantService : IProductVariantService
 {
-    private readonly IProductVariantRepository _variantRepo;
-    private readonly IProductVariantImageRepository _imageRepo;
     private readonly IProductRepository _productRepo;
+    private readonly IProductVariantRepository _variantRepo;
+    private readonly IUnitOfWork _unitOfWork;
 
     public ProductVariantService(
+        IProductRepository productRepo,
         IProductVariantRepository variantRepo,
-        IProductVariantImageRepository imageRepo,
-        IProductRepository productRepo)
+        IUnitOfWork unitOfWork)
     {
-        _variantRepo = variantRepo;
-        _imageRepo = imageRepo;
         _productRepo = productRepo;
+        _variantRepo = variantRepo;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<ProductVariantDto> GetByIdAsync(Guid id)
@@ -45,12 +45,11 @@ public class ProductVariantService : IProductVariantService
         if (!await _variantRepo.IsSkuUniqueAsync(request.Sku))
             throw new InvalidOperationException($"SKU '{request.Sku}' already exists.");
 
-        if (!await ValidateVariantCombinationAsync(productId, request.AttributeValueIds))
-            throw new InvalidOperationException("A variant with this attribute combination already exists for this product.");
+        if (!await IsCombinationUniqueAsync(productId, request.AttributeValueIds))
+            throw new InvalidOperationException("Variant combination already exists.");
 
         var variant = new ProductVariant
         {
-            Id = Guid.NewGuid(),
             ProductId = productId,
             Sku = request.Sku,
             Name = request.Name,
@@ -59,41 +58,30 @@ public class ProductVariantService : IProductVariantService
             CompareAtPrice = request.CompareAtPrice,
             Stock = request.Stock,
             Status = request.Status,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            Images = request.Images.Select(i => new ProductVariantImage
+            {
+                Url = i.Url,
+                SortOrder = i.SortOrder,
+                IsPrimary = i.IsPrimary,
+                CreatedAt = DateTime.UtcNow
+            }).ToList(),
+            Attributes = request.AttributeValueIds.Select(v => new ProductVariantAttribute
+            {
+                ProductAttributeValueId = v
+            }).ToList()
         };
 
         await _variantRepo.AddAsync(variant);
 
-        foreach (var valId in request.AttributeValueIds)
-        {
-            variant.Attributes.Add(new ProductVariantAttribute
-            {
-                Id = Guid.NewGuid(),
-                ProductAttributeValueId = valId
-            });
-        }
-
-        await _variantRepo.AddAsync(variant);
-
-        foreach (var img in request.Images)
-        {
-            await _imageRepo.AddAsync(new ProductVariantImage
-            {
-                Id = Guid.NewGuid(),
-                ProductVariantId = variant.Id,
-                Url = img.Url,
-                SortOrder = img.SortOrder,
-                IsPrimary = img.IsPrimary,
-                CreatedAt = DateTime.UtcNow
-            });
-        }
+        await _unitOfWork.SaveChangesAsync();
 
         return variant.Id;
     }
 
     public async Task UpdateAsync(Guid id, UpdateProductVariantRequest request)
     {
-        var variant = await _variantRepo.GetByIdAsync(id)
+        var variant = await _variantRepo.GetTrackedByIdAsync(id)
             ?? throw new KeyNotFoundException($"Variant id '{id}' not found.");
 
         if (variant.Sku != request.Sku && !await _variantRepo.IsSkuUniqueAsync(request.Sku, id))
@@ -108,55 +96,65 @@ public class ProductVariantService : IProductVariantService
         variant.Status = request.Status;
         variant.UpdatedAt = DateTime.UtcNow;
 
-        await _variantRepo.UpdateAsync(variant);
-
-        var existing = await _imageRepo.GetByVariantIdAsync(id);
-
-        var toDelete = existing.Where(e => !request.Images.Any(r => r.Id == e.Id));
-        foreach (var d in toDelete)
-            await _imageRepo.DeleteAsync(d);
-
-        foreach (var r in request.Images)
+        if (request.Images != null)
         {
-            if (r.Id == null)
-            {
-                await _imageRepo.AddAsync(new ProductVariantImage
-                {
-                    Id = Guid.NewGuid(),
-                    ProductVariantId = id,
-                    Url = r.Url,
-                    SortOrder = r.SortOrder,
-                    IsPrimary = r.IsPrimary,
-                    CreatedAt = DateTime.UtcNow
-                });
-            }
-            else
-            {
-                var img = existing.First(x => x.Id == r.Id);
-                img.Url = r.Url;
-                img.SortOrder = r.SortOrder;
-                img.IsPrimary = r.IsPrimary;
-                img.UpdatedAt = DateTime.UtcNow;
+            // Remove old images
+            _variantRepo.RemoveImages(variant.Images);
 
-                await _imageRepo.UpdateAsync(img);
-            }
+            // Recreate images
+            variant.Images = request.Images
+                .Select(image => new ProductVariantImage
+                {
+                    ProductVariantId = variant.Id,
+                    Url = image.Url,
+                    SortOrder = image.SortOrder,
+                    IsPrimary = image.IsPrimary,
+                    CreatedAt = DateTime.UtcNow
+                })
+                .ToList();
         }
+
+        // Remove old attributes
+        _variantRepo.RemoveAttributes(variant.Attributes);
+
+        // Recreate attributes
+        variant.Attributes = request.AttributeValueIds
+            .Select(attributeValueId => new ProductVariantAttribute
+            {
+                ProductVariantId = variant.Id,
+                ProductAttributeValueId = attributeValueId
+            })
+            .ToList();
+
+        await _unitOfWork.SaveChangesAsync();
     }
 
-    public async Task DeleteAsync(Guid id)
+    public async Task DeleteDraftAsync(Guid id)
     {
-        var variant = await _variantRepo.GetByIdAsync(id)
+        var variant = await _variantRepo.GetTrackedByIdAsync(id)
             ?? throw new KeyNotFoundException($"Variant id '{id}' not found.");
 
-        await _variantRepo.DeleteAsync(variant);
+        _variantRepo.Delete(variant);
+
+        await _unitOfWork.SaveChangesAsync();
     }
 
-    public async Task<bool> ValidateVariantCombinationAsync(Guid productId, List<Guid> attributeValueIds)
+    public async Task RemoveAllVariantsAsync(Guid productId)
+    {
+        var variants = await _variantRepo.GetTrackedByProductIdAsync(productId);
+
+        _variantRepo.DeleteRange(variants);
+
+        await _unitOfWork.SaveChangesAsync();
+    }
+
+    public async Task<bool> IsCombinationUniqueAsync(Guid productId, List<Guid> attributeValueIds)
     {
         var variants = await _variantRepo.GetByProductIdAsync(productId);
 
         var exists = variants.Any(v =>
-            v.Attributes.Select(a => a.ProductAttributeValueId)
+            v.Attributes
+                .Select(a => a.ProductAttributeValueId)
                 .OrderBy(x => x)
                 .SequenceEqual(attributeValueIds.OrderBy(x => x)));
 
@@ -175,7 +173,26 @@ public class ProductVariantService : IProductVariantService
             CompareAtPrice = variant.CompareAtPrice,
             DiscountPercentage = variant.DiscountPercentage,
             Stock = variant.Stock,
-            Status = variant.Status
+            Status = variant.Status,
+            Images = variant.Images
+                .OrderBy(i => i.SortOrder)
+                .Select(i => new ProductVariantImageDto
+                {
+                    Id = i.Id,
+                    Url = i.Url,
+                    SortOrder = i.SortOrder,
+                    IsPrimary = i.IsPrimary
+                }).ToList(),
+
+            Attributes = variant.Attributes
+                .Select(a => new ProductVariantAttributeDto
+                {
+                    AttributeId = a.ProductAttributeValue.ProductAttributeId,
+                    AttributeName = a.ProductAttributeValue.ProductAttribute.Name,
+
+                    AttributeValueId = a.ProductAttributeValueId,
+                    AttributeValue = a.ProductAttributeValue.Value
+                }).ToList()
         };
     }
 }

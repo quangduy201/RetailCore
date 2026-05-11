@@ -1,5 +1,6 @@
 using RetailCore.Shared.Common;
 using RetailCore.Shared.DTOs.Product;
+using RetailCore.Shared.Enums;
 using RetailCore.Shared.Requests.Product;
 
 namespace RetailCore.Services.Interfaces;
@@ -13,4 +14,5 @@ public interface IProductService
     Task<Guid> CreateAsync(CreateProductRequest request);
     Task UpdateAsync(Guid id, UpdateProductRequest request);
     Task DeleteAsync(Guid id);
+    Task UpdateStatusAsync(Guid id, ProductStatus status);
 }

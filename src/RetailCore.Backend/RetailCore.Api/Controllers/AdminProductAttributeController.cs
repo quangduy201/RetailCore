@@ -30,14 +30,14 @@ public class AdminProductAttributeController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create(Guid productId, [FromBody] CreateProductAttributeRequest request)
+    public async Task<IActionResult> Create(Guid productId, [FromBody] ProductAttributeRequest request)
     {
         var id = await _attributeService.CreateAsync(productId, request);
         return CreatedAtAction(nameof(GetById), new { productId, attributeId = id }, id);
     }
 
     [HttpPut("{attributeId:guid}")]
-    public async Task<IActionResult> Update(Guid attributeId, [FromBody] UpdateProductAttributeRequest request)
+    public async Task<IActionResult> Update(Guid attributeId, [FromBody] ProductAttributeRequest request)
     {
         await _attributeService.UpdateAsync(attributeId, request);
         return NoContent();
@@ -58,14 +58,14 @@ public class AdminProductAttributeController : ControllerBase
     }
 
     [HttpPost("{attributeId:guid}/values")]
-    public async Task<IActionResult> CreateValue(Guid attributeId, [FromBody] CreateProductAttributeValueRequest request)
+    public async Task<IActionResult> CreateValue(Guid attributeId, [FromBody] ProductAttributeValueRequest request)
     {
         var id = await _attributeService.CreateValueAsync(attributeId, request);
         return Ok(id);
     }
 
     [HttpPut("{attributeId:guid}/values/{valueId:guid}")]
-    public async Task<IActionResult> UpdateValue(Guid valueId, [FromBody] UpdateProductAttributeValueRequest request)
+    public async Task<IActionResult> UpdateValue(Guid valueId, [FromBody] ProductAttributeValueRequest request)
     {
         await _attributeService.UpdateValueAsync(valueId, request);
         return NoContent();

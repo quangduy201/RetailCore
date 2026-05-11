@@ -20,11 +20,13 @@ public interface IProductRepository
         int pageSize);
 
     Task<Product?> GetByIdAsync(Guid id);
-    Task<Product?> GetBySlugAsync(string slug);
     Task<Product?> GetByIdWithDetailsAsync(Guid id);
+    Task<Product?> GetTrackedByIdWithDetailsAsync(Guid id);
+    Task<Product?> GetBySlugAsync(string slug);
     Task<Product?> GetBySlugWithDetailsAsync(string slug);
     Task<bool> IsSlugUniqueAsync(string slug, Guid? excludeId = null);
     Task AddAsync(Product product);
-    Task UpdateAsync(Product product);
-    Task DeleteAsync(Product product);
+    void Update(Product product);
+    void Delete(Product product);
+    void RemoveAttributes(IEnumerable<ProductAttribute> attributes);
 }

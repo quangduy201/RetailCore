@@ -1,8 +1,6 @@
-using RetailCore.Repositories.Common;
-
 namespace RetailCore.Repositories.Entities;
 
-public class ProductVariantAttribute : Entity
+public class ProductVariantAttribute
 {
     public Guid ProductVariantId { get; set; }
     public Guid ProductAttributeValueId { get; set; }
