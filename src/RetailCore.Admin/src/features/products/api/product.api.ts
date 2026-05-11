@@ -37,4 +37,20 @@ export const productApi = {
   delete: async (id: UUID): Promise<void> => {
     await http.delete(`${BASE_URL}/${id}`);
   },
+
+  publish: async (id: UUID): Promise<void> => {
+    await http.post(`${BASE_URL}/${id}/publish`);
+  },
+
+  unpublish: async (id: UUID): Promise<void> => {
+    await http.post(`${BASE_URL}/${id}/unpublish`);
+  },
+
+  archive: async (id: UUID): Promise<void> => {
+    await http.post(`${BASE_URL}/${id}/archive`);
+  },
+
+  restore: async (id: UUID): Promise<void> => {
+    await http.post(`${BASE_URL}/${id}/restore`);
+  },
 };

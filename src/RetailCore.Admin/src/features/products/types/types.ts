@@ -122,7 +122,7 @@ export interface UpdateProductRequest {
   description?: string;
   brandId: UUID;
   categoryId: UUID;
-  status: ProductStatus;
+  attributes: CreateProductAttributeRequest[];
 }
 
 // Attribute

@@ -28,4 +28,5 @@ public interface IProductRepository
     Task AddAsync(Product product);
     void Update(Product product);
     void Delete(Product product);
+    void RemoveAttributes(IEnumerable<ProductAttribute> attributes);
 }

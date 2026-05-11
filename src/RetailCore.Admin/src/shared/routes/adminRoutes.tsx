@@ -2,7 +2,8 @@ import type { JSX } from "react";
 import DashboardPage from "@/features/dashboard/pages/DashboardPage";
 import ProductsPage from "@/features/products/pages/ProductsPage";
 import ProductCreatePage from "@/features/products/pages/ProductCreatePage";
-import ProductEditPage from "@/features/products/pages/ProductEditPage";
+import ProductSetupPage from "@/features/products/pages/ProductSetupPage";
+import ProductDetailPage from "@/features/products/pages/ProductDetailPage";
 import CategoriesPage from "@/features/categories/pages/CategoriesPage";
 import CategoryCreatePage from "@/features/categories/pages/CategoryCreatePage";
 import CategoryEditPage from "@/features/categories/pages/CategoryEditPage";
@@ -21,7 +22,8 @@ export const adminRoutes: RouteConfig[] = [
   { path: "/", element: <DashboardPage /> },
   { path: "/products", element: <ProductsPage /> },
   { path: "/products/create", element: <ProductCreatePage /> },
-  { path: "/products/:id/edit", element: <ProductEditPage /> },
+  { path: "/products/:id/setup", element: <ProductSetupPage /> },
+  { path: "/products/:id", element: <ProductDetailPage /> },
   { path: "/categories", element: <CategoriesPage /> },
   { path: "/categories/create", element: <CategoryCreatePage /> },
   { path: "/categories/:id/edit", element: <CategoryEditPage /> },

@@ -96,22 +96,35 @@ public class ProductVariantService : IProductVariantService
         variant.Status = request.Status;
         variant.UpdatedAt = DateTime.UtcNow;
 
-        variant.Images.Clear();
-        variant.Attributes.Clear();
-
-        variant.Images = request.Images.Select(i => new ProductVariantImage
+        if (request.Images != null)
         {
-            Id = i.Id ?? Guid.NewGuid(),
-            Url = i.Url,
-            SortOrder = i.SortOrder,
-            IsPrimary = i.IsPrimary
-        }).ToList();
+            // Remove old images
+            _variantRepo.RemoveImages(variant.Images);
 
+            // Recreate images
+            variant.Images = request.Images
+                .Select(image => new ProductVariantImage
+                {
+                    ProductVariantId = variant.Id,
+                    Url = image.Url,
+                    SortOrder = image.SortOrder,
+                    IsPrimary = image.IsPrimary,
+                    CreatedAt = DateTime.UtcNow
+                })
+                .ToList();
+        }
+
+        // Remove old attributes
+        _variantRepo.RemoveAttributes(variant.Attributes);
+
+        // Recreate attributes
         variant.Attributes = request.AttributeValueIds
-            .Select(v => new ProductVariantAttribute
+            .Select(attributeValueId => new ProductVariantAttribute
             {
-                ProductAttributeValueId = v
-            }).ToList();
+                ProductVariantId = variant.Id,
+                ProductAttributeValueId = attributeValueId
+            })
+            .ToList();
 
         await _unitOfWork.SaveChangesAsync();
     }

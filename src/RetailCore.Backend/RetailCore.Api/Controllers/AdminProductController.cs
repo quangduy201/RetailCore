@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using RetailCore.Services.Interfaces;
+using RetailCore.Shared.Enums;
 using RetailCore.Shared.Requests.Product;
 
 namespace RetailCore.Api.Controllers;
@@ -77,36 +78,23 @@ public class AdminProductController : ControllerBase
     [HttpPost("{id:guid}/publish")]
     public async Task<IActionResult> Publish(Guid id)
     {
+        await _productService.UpdateStatusAsync(id, ProductStatus.Active);
         return NoContent();
     }
 
-    [HttpPost("{id:guid}/unpublish")]
-    public async Task<IActionResult> Unpublish(Guid id)
+    [HttpPost]
+    [Route("{id:guid}/unpublish")]
+    [Route("{id:guid}/restore")]
+    public async Task<IActionResult> UnpublishOrRestore(Guid id)
     {
+        await _productService.UpdateStatusAsync(id, ProductStatus.Inactive);
         return NoContent();
     }
 
-    [HttpPost("{id:guid}/feature")]
-    public async Task<IActionResult> Feature(Guid id)
+    [HttpPost("{id:guid}/archive")]
+    public async Task<IActionResult> Archive(Guid id)
     {
-        return NoContent();
-    }
-
-    [HttpPost("{id:guid}/unfeature")]
-    public async Task<IActionResult> Unfeature(Guid id)
-    {
-        return NoContent();
-    }
-
-    [HttpPatch("{id:guid}/setup-progress")]
-    public async Task<IActionResult> SetupProgress(Guid id)
-    {
-        return NoContent();
-    }
-
-    [HttpGet("{id:guid}/setup-status")]
-    public async Task<IActionResult> SetupStatus(Guid id)
-    {
+        await _productService.UpdateStatusAsync(id, ProductStatus.Archived);
         return NoContent();
     }
 }

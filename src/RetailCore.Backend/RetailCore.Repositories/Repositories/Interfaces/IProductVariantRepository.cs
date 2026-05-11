@@ -14,4 +14,6 @@ public interface IProductVariantRepository
     void Update(ProductVariant variant);
     void Delete(ProductVariant variant);
     void DeleteRange(List<ProductVariant> variants);
+    void RemoveImages(IEnumerable<ProductVariantImage> images);
+    void RemoveAttributes(IEnumerable<ProductVariantAttribute> attributes);
 }

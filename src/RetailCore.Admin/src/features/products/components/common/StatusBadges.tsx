@@ -46,6 +46,7 @@ export function VariantStatusBadge({
     ProductVariantStatus,
     { label: string; color: ChipVariants["color"] }
   > = {
+    [ProductVariantStatus.Draft]: { label: "Draft", color: "default" },
     [ProductVariantStatus.Active]: { label: "Active", color: "success" },
     [ProductVariantStatus.Inactive]: {
       label: "Inactive",

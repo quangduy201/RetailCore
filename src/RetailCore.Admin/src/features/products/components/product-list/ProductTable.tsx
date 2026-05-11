@@ -216,11 +216,8 @@ export function ProductTable({
 
   return (
     <Table variant="primary" className="border border-default">
-      <Table.ResizableContainer>
-        <Table.Content
-          aria-label="Products table"
-          className="max-h-175 overflow-auto"
-        >
+      <Table.ResizableContainer className="max-h-[calc(100vh-200px)] overflow-auto">
+        <Table.Content aria-label="Products table">
           <Table.Header columns={PRODUCT_TABLE_COLUMNS}>
             {(column) => (
               <Table.Column
@@ -232,7 +229,6 @@ export function ProductTable({
               >
                 <div className="flex items-center gap-2">
                   <span>{column.label}</span>
-
                   <Table.ColumnResizer />
                 </div>
               </Table.Column>

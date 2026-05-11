@@ -60,25 +60,35 @@ public class ProductVariantRepository : IProductVariantRepository
         await _context.ProductVariants.AddAsync(variant);
     }
 
-    public async void Update(ProductVariant variant)
+    public void Update(ProductVariant variant)
     {
         _context.ProductVariants.Update(variant);
     }
 
-    public async void Delete(ProductVariant variant)
+    public void Delete(ProductVariant variant)
     {
         _context.ProductVariants.Remove(variant);
     }
 
-    public async void DeleteRange(List<ProductVariant> variants)
+    public void DeleteRange(List<ProductVariant> variants)
     {
         _context.ProductVariants.RemoveRange(variants);
+    }
+
+    public void RemoveImages(IEnumerable<ProductVariantImage> images)
+    {
+        _context.ProductVariantImages.RemoveRange(images);
+    }
+
+    public void RemoveAttributes(IEnumerable<ProductVariantAttribute> attributes)
+    {
+        _context.ProductVariantAttributes.RemoveRange(attributes);
     }
 
     private IQueryable<ProductVariant> BuildQuery()
     {
         return _context.ProductVariants
-            .Include(v => v.Images.OrderBy(i => i.SortOrder))
+            .Include(v => v.Images)
             .Include(v => v.Attributes)
                 .ThenInclude(a => a.ProductAttributeValue)
                     .ThenInclude(v => v.ProductAttribute);

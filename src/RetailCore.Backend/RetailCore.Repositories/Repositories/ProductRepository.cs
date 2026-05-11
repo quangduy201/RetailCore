@@ -138,6 +138,11 @@ public class ProductRepository : IProductRepository
         _context.Products.Remove(product);
     }
 
+    public void RemoveAttributes(IEnumerable<ProductAttribute> attributes)
+    {
+        _context.ProductAttributes.RemoveRange(attributes);
+    }
+
     private IQueryable<Product> BuildDetailsQuery()
     {
         return _context.Products

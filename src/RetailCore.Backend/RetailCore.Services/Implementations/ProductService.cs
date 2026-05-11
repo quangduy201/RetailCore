@@ -1,3 +1,4 @@
+using System.Text.Json;
 using RetailCore.Repositories.Entities;
 using RetailCore.Repositories.Repositories.Interfaces;
 using RetailCore.Services.Interfaces;
@@ -117,12 +118,28 @@ public class ProductService : IProductService
         product.CategoryId = request.CategoryId;
         product.UpdatedAt = DateTime.UtcNow;
 
-        product.Attributes.Clear();
-        product.Attributes = request.Attributes.Select(MapToProductAttribute).ToList();
-
-        if (product.Variants.Any())
+        var attributesChanged = HaveAttributesChanged(product, request);
+        if (attributesChanged)
         {
-            _variantRepo.DeleteRange(product.Variants.ToList());
+            // Remove all variants if exist
+            if (product.Variants.Any())
+            {
+                _variantRepo.DeleteRange(product.Variants.ToList());
+            }
+
+            // Remove old attributes
+            _productRepo.RemoveAttributes(product.Attributes);
+
+            // Recreate attributes
+            product.Attributes = request.Attributes.Select(attribute => new ProductAttribute
+            {
+                ProductId = product.Id,
+                Name = attribute.Name,
+                Values = attribute.Values.Select(value => new ProductAttributeValue
+                {
+                    Value = value.Value
+                }).ToList()
+            }).ToList();
         }
 
         await _unitOfWork.SaveChangesAsync();
@@ -136,6 +153,58 @@ public class ProductService : IProductService
         _productRepo.Delete(product);
 
         await _unitOfWork.SaveChangesAsync();
+    }
+
+    public async Task UpdateStatusAsync(Guid id, ProductStatus status)
+    {
+        var product = await _productRepo.GetTrackedByIdWithDetailsAsync(id)
+            ?? throw new KeyNotFoundException($"Product id '{id}' not found.");
+
+        ValidateStatusTransition(product, status);
+
+        product.Status = status;
+        product.UpdatedAt = DateTime.UtcNow;
+
+        await _unitOfWork.SaveChangesAsync();
+    }
+
+    private static void ValidateStatusTransition(Product product, ProductStatus newStatus)
+    {
+        if (newStatus == ProductStatus.Active)
+        {
+            ValidatePublish(product);
+        }
+
+        if (product.Status == ProductStatus.Active && newStatus != ProductStatus.Inactive)
+        {
+            throw new InvalidOperationException("Active product must be unpublished first.");
+        }
+
+        if (product.Status == ProductStatus.Archived && newStatus != ProductStatus.Inactive)
+        {
+            throw new InvalidOperationException("Archived product must be restored first.");
+        }
+    }
+
+    private static void ValidatePublish(Product product)
+    {
+        if (string.IsNullOrWhiteSpace(product.Name))
+            throw new InvalidOperationException("Product name is required.");
+
+        if (product.Attributes.Count == 0)
+            throw new InvalidOperationException("Product must have attributes.");
+
+        if (product.Variants.Count == 0)
+            throw new InvalidOperationException("Product must have variants.");
+
+        if (!product.Variants.Any(v => v.Images.Any()))
+            throw new InvalidOperationException("At least one variant image is required.");
+
+        if (product.Variants.Any(v => v.Price <= 0))
+            throw new InvalidOperationException("All variants must have valid prices.");
+
+        if (product.Variants.Any(v => string.IsNullOrWhiteSpace(v.Sku)))
+            throw new InvalidOperationException("All variants must have SKU.");
     }
 
     public static ProductAttribute MapToProductAttribute(ProductAttributeRequest request)
@@ -232,5 +301,37 @@ public class ProductService : IProductService
             CreatedAt = p.CreatedAt,
             UpdatedAt = p.UpdatedAt
         };
+    }
+
+    private static bool HaveAttributesChanged(Product product, UpdateProductRequest request)
+    {
+        var existing = product.Attributes
+        .Select(a => new
+        {
+            Name = a.Name?.Trim().ToLower() ?? string.Empty,
+
+            Values = a.Values
+                .Select(v => v.Value?.Trim().ToLower() ?? string.Empty)
+                .OrderBy(v => v)
+                .ToList()
+        })
+        .OrderBy(a => a.Name)
+        .ToList();
+
+        var incoming = request.Attributes
+            .Select(a => new
+            {
+                Name = a.Name?.Trim().ToLower() ?? string.Empty,
+
+                Values = a.Values
+                    .Select(v => v?.Value?.Trim().ToLower() ?? string.Empty)
+                    .OrderBy(v => v)
+                    .ToList()
+            })
+            .OrderBy(a => a.Name)
+            .ToList();
+
+        return JsonSerializer.Serialize(existing)
+            != JsonSerializer.Serialize(incoming);
     }
 }

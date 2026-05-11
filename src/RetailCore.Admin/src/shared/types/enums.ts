@@ -17,6 +17,7 @@ export const ProductStatus = {
 } as const;
 
 export const ProductVariantStatus = {
+  Draft: 0,
   Active: 1,
   Inactive: 2,
   Discontinued: 3,
