@@ -1,10 +1,22 @@
 import { useState } from "react";
-import { Outlet } from "react-router-dom";
-import Sidebar from "@/shared/components/Sidebar";
+import { Navigate, Outlet } from "react-router-dom";
+
+import { useAuth } from "@/features/auth/hooks/useAuth";
 import Header from "@/shared/components/Header";
+import Sidebar from "@/shared/components/Sidebar";
 
 export default function AdminLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  const { isAuthenticated, isAdmin } = useAuth();
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (!isAdmin) {
+    return <Navigate to="/unauthorized" replace />;
+  }
 
   return (
     <div className="flex h-screen bg-gray-100">

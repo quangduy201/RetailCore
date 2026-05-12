@@ -1,7 +1,6 @@
 import {
   Chip,
   Input,
-  Label,
   ListBox,
   Select,
   Switch,

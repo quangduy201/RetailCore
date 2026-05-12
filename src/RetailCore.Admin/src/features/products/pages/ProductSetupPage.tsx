@@ -44,7 +44,7 @@ export default function ProductSetupPage() {
         console.error(error);
         toast.error("Failed to initialize product setup");
 
-        navigate("/products");
+        navigate("/admin/products");
       }
     };
 
@@ -69,7 +69,7 @@ export default function ProductSetupPage() {
       <ProductSetupHeader
         title="Setup Product"
         subtitle={`Step ${currentStep.number} of ${STEPS.length} · ${currentStep.title}`}
-        onBack={() => navigate(`/products/${productId}`)}
+        onBack={() => navigate(`/admin/products/${productId}`)}
       />
 
       <ProductSetupProgress currentStep={currentStep.number} />
@@ -85,9 +85,9 @@ export default function ProductSetupPage() {
             }}
             onCancel={() => {
               if (product === null) {
-                navigate("/products");
+                navigate("/admin/products");
               } else {
-                navigate(`/products/${product.id}`);
+                navigate(`/admin/products/${product.id}`);
               }
             }}
           />
@@ -108,7 +108,7 @@ export default function ProductSetupPage() {
           <Step3Images
             product={product}
             onBack={() => goToStep(2)}
-            onCompleted={() => navigate(`/products/${product?.id}`)}
+            onCompleted={() => navigate(`/admin/products/${product?.id}`)}
           />
         )}
       </div>

@@ -149,7 +149,7 @@ export default function ProductDetailPage() {
           {/* LEFT */}
           <div className="space-y-6">
             <button
-              onClick={() => navigate("/products")}
+              onClick={() => navigate("/admin/products")}
               className="flex items-center gap-2 text-sm text-default-500 transition hover:text-foreground"
             >
               <ArrowLeft className="size-4" />
@@ -199,7 +199,7 @@ export default function ProductDetailPage() {
           <div className="flex flex-wrap gap-3">
             <Button
               variant="primary"
-              onPress={() => navigate(`/products/${product.id}/setup`)}
+              onPress={() => navigate(`/admin/products/${product.id}/setup`)}
             >
               {setupProgress === 100 ? (
                 <>

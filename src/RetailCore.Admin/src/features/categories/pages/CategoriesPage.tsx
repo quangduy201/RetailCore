@@ -49,8 +49,8 @@ export default function CategoriesPage() {
     void loadCategories();
   }, [loadCategories]);
 
-  const handleCreate = () => navigate("/categories/create");
-  const handleEdit = (id: string) => navigate(`/categories/${id}/edit`);
+  const handleCreate = () => navigate("/admin/categories/create");
+  const handleEdit = (id: string) => navigate(`/admin/categories/${id}/edit`);
 
   const handleDelete = async (id: string) => {
     if (!globalThis.confirm("Delete this category?")) return;

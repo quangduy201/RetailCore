@@ -49,8 +49,8 @@ export default function BrandsPage() {
     void loadBrands();
   }, [loadBrands]);
 
-  const handleCreate = () => navigate("/brands/create");
-  const handleEdit = (id: string) => navigate(`/brands/${id}/edit`);
+  const handleCreate = () => navigate("/admin/brands/create");
+  const handleEdit = (id: string) => navigate(`/admin/brands/${id}/edit`);
 
   const handleDelete = async (id: string) => {
     if (!globalThis.confirm("Delete this brand?")) return;

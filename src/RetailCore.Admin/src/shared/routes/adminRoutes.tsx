@@ -1,4 +1,5 @@
 import type { JSX } from "react";
+import AdminProfilePage from "@/features/auth/pages/AdminProfilePage";
 import DashboardPage from "@/features/dashboard/pages/DashboardPage";
 import ProductsPage from "@/features/products/pages/ProductsPage";
 import ProductCreatePage from "@/features/products/pages/ProductCreatePage";
@@ -19,17 +20,19 @@ export type RouteConfig = {
 };
 
 export const adminRoutes: RouteConfig[] = [
-  { path: "/", element: <DashboardPage /> },
-  { path: "/products", element: <ProductsPage /> },
-  { path: "/products/create", element: <ProductCreatePage /> },
-  { path: "/products/:id/setup", element: <ProductSetupPage /> },
-  { path: "/products/:id", element: <ProductDetailPage /> },
-  { path: "/categories", element: <CategoriesPage /> },
-  { path: "/categories/create", element: <CategoryCreatePage /> },
-  { path: "/categories/:id/edit", element: <CategoryEditPage /> },
-  { path: "/brands", element: <BrandsPage /> },
-  { path: "/brands/create", element: <BrandCreatePage /> },
-  { path: "/brands/:id/edit", element: <BrandEditPage /> },
-  { path: "/orders", element: <OrdersPage /> },
-  { path: "/customers", element: <CustomersPage /> },
+  { path: "/admin", element: <DashboardPage /> },
+  { path: "/admin/profile", element: <AdminProfilePage /> },
+  { path: "/admin/dashboard", element: <DashboardPage /> },
+  { path: "/admin/products", element: <ProductsPage /> },
+  { path: "/admin/products/create", element: <ProductCreatePage /> },
+  { path: "/admin/products/:id/setup", element: <ProductSetupPage /> },
+  { path: "/admin/products/:id", element: <ProductDetailPage /> },
+  { path: "/admin/categories", element: <CategoriesPage /> },
+  { path: "/admin/categories/create", element: <CategoryCreatePage /> },
+  { path: "/admin/categories/:id/edit", element: <CategoryEditPage /> },
+  { path: "/admin/brands", element: <BrandsPage /> },
+  { path: "/admin/brands/create", element: <BrandCreatePage /> },
+  { path: "/admin/brands/:id/edit", element: <BrandEditPage /> },
+  { path: "/admin/orders", element: <OrdersPage /> },
+  { path: "/admin/customers", element: <CustomersPage /> },
 ];

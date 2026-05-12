@@ -76,11 +76,11 @@ export default function ProductsPage() {
   };
 
   const handleCreateProduct = () => {
-    navigate("/products/create");
+    navigate("/admin/products/create");
   };
 
   const handleEditProduct = (productId: string) => {
-    navigate(`/products/${productId}`);
+    navigate(`/admin/products/${productId}`);
   };
 
   return (

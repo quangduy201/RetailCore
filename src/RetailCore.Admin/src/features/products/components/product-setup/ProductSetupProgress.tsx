@@ -1,4 +1,4 @@
-import { Card, ProgressBar } from "@heroui/react";
+import { Card } from "@heroui/react";
 import { Check } from "lucide-react";
 
 export interface Step {
@@ -25,7 +25,7 @@ export const STEPS: Step[] = [
   },
 ];
 
-export function ProductSetupProgress({ currentStep }: Props) {
+export function ProductSetupProgress({ currentStep }: Readonly<Props>) {
   return (
     <Card className="overflow-hidden border border-default-200 p-8">
       <div className="flex items-center justify-evenly">

@@ -1,11 +1,14 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RetailCore.Services.Interfaces;
+using RetailCore.Shared.Constants;
 using RetailCore.Shared.Requests.Category;
 
 namespace RetailCore.Api.Controllers;
 
 [ApiController]
 [Route("api/admin/categories")]
+[Authorize(Roles = RoleConstants.Admin)]
 public class AdminCategoryController : ControllerBase
 {
     private readonly ICategoryService _categoryService;

@@ -52,7 +52,7 @@ export default function BrandEditPage() {
     const loadBrand = async () => {
       if (!id) {
         toast.error("Invalid brand ID");
-        navigate("/brands");
+        navigate("/admin/brands");
         return;
       }
 
@@ -68,7 +68,7 @@ export default function BrandEditPage() {
       } catch (error) {
         console.error("Failed to load brand:", error);
         toast.error("Failed to load brand details");
-        navigate("/brands");
+        navigate("/admin/brands");
       } finally {
         setIsLoading(false);
       }
@@ -93,7 +93,7 @@ export default function BrandEditPage() {
 
       await brandApi.update(brand.id, data);
       toast.success("Brand updated successfully");
-      navigate("/brands");
+      navigate("/admin/brands");
     } catch (error) {
       console.error("Failed to update brand:", error);
       toast.error("Failed to update brand. Please try again.");
@@ -125,7 +125,7 @@ export default function BrandEditPage() {
         <Button
           isIconOnly
           variant="outline"
-          onPress={() => navigate("/brands")}
+          onPress={() => navigate("/admin/brands")}
         >
           <ChevronLeft className="size-5" />
         </Button>
@@ -220,7 +220,7 @@ export default function BrandEditPage() {
             <div className="flex gap-3 border-t border-default-200 pt-6">
               <Button
                 variant="secondary"
-                onPress={() => navigate("/brands")}
+                onPress={() => navigate("/admin/brands")}
                 className="flex-1"
               >
                 Cancel

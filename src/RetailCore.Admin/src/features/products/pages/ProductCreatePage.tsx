@@ -18,7 +18,7 @@ export default function ProductCreatePage() {
       <ProductSetupHeader
         title="Create Product"
         subtitle={`Step ${step.number} of ${STEPS.length} · ${step.title}`}
-        onBack={() => navigate("/products")}
+        onBack={() => navigate("/admin/products")}
       />
 
       {/* Progress */}
@@ -29,13 +29,13 @@ export default function ProductCreatePage() {
         <Step1BasicInfo
           onCompleted={(createdProduct) => {
             navigate(
-              `/products/${createdProduct.id}/setup?step=${STEPS[1].number}`,
+              `/admin/products/${createdProduct.id}/setup?step=${STEPS[1].number}`,
               {
                 replace: true,
               },
             );
           }}
-          onCancel={() => navigate("/products")}
+          onCancel={() => navigate("/admin/products")}
         />
       </div>
     </div>
