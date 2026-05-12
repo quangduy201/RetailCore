@@ -1,7 +1,3 @@
-using Moq;
-using RetailCore.Repositories.Entities;
-using RetailCore.Repositories.Repositories.Interfaces;
-using RetailCore.Services.Implementations;
 using RetailCore.Shared.Enums;
 using RetailCore.Shared.Requests.Product;
 
@@ -9,369 +5,726 @@ namespace RetailCore.UnitTests.Services;
 
 public class ProductVariantServiceTests
 {
-    private readonly Mock<IProductVariantRepository> _mockVariantRepo;
-    private readonly Mock<IProductVariantImageRepository> _mockImageRepo;
-    private readonly Mock<IProductRepository> _mockProductRepo;
-    private readonly ProductVariantService _service;
+    private readonly Mock<IProductRepository> _productRepoMock;
+    private readonly Mock<IProductVariantRepository> _variantRepoMock;
+    private readonly Mock<IUnitOfWork> _unitOfWorkMock;
+
+    private readonly ProductVariantService _variantService;
 
     public ProductVariantServiceTests()
     {
-        _mockVariantRepo = new Mock<IProductVariantRepository>();
-        _mockImageRepo = new Mock<IProductVariantImageRepository>();
-        _mockProductRepo = new Mock<IProductRepository>();
-        _service = new ProductVariantService(_mockVariantRepo.Object, _mockImageRepo.Object, _mockProductRepo.Object);
+        _productRepoMock = new Mock<IProductRepository>();
+        _variantRepoMock = new Mock<IProductVariantRepository>();
+        _unitOfWorkMock = new Mock<IUnitOfWork>();
+
+        _variantService = new ProductVariantService(
+            _productRepoMock.Object,
+            _variantRepoMock.Object,
+            _unitOfWorkMock.Object);
+
+        _unitOfWorkMock
+            .Setup(uow => uow.SaveChangesAsync())
+            .ReturnsAsync(1);
     }
 
-    #region GetByIdAsync Tests
-
     [Fact]
-    public async Task GetByIdAsync_WithValidId_ReturnsVariant()
+    public async Task GetByIdAsync_WhenVariantExists_ShouldReturnVariantDto()
     {
         // Arrange
-        var id = Guid.NewGuid();
-        var variant = new ProductVariant
-        {
-            Id = id,
-            Sku = "SKU-001",
-            Name = "Variant 1",
-            Price = 100,
-            Stock = 10,
-            Status = ProductVariantStatus.Active
-        };
+        var variant = CreateVariant();
 
-        _mockVariantRepo.Setup(r => r.GetByIdAsync(id))
+        _variantRepoMock
+            .Setup(repo => repo.GetByIdAsync(variant.Id))
             .ReturnsAsync(variant);
 
         // Act
-        var result = await _service.GetByIdAsync(id);
+        var result = await _variantService.GetByIdAsync(variant.Id);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal(id, result.Id);
-        Assert.Equal("SKU-001", result.Sku);
+        Assert.Equal(variant.Id, result.Id);
+        Assert.Equal(variant.Sku, result.Sku);
+        Assert.Equal(variant.Name, result.Name);
+        Assert.Equal(variant.Description, result.Description);
+        Assert.Equal(variant.Price, result.Price);
+        Assert.Equal(variant.CompareAtPrice, result.CompareAtPrice);
+        Assert.Equal(variant.Stock, result.Stock);
+        Assert.Equal(variant.Status, result.Status);
+
+        Assert.Equal(2, result.Images.Count);
+        Assert.Equal(1, result.Images[0].SortOrder);
+        Assert.Equal(2, result.Images[1].SortOrder);
+
+        Assert.Equal(2, result.Attributes.Count);
+        Assert.Equal("Color", result.Attributes[0].AttributeName);
+        Assert.Equal("Black", result.Attributes[0].AttributeValue);
+        Assert.Equal("Color", result.Attributes[1].AttributeName);
+        Assert.Equal("Black", result.Attributes[1].AttributeValue);
     }
 
     [Fact]
-    public async Task GetByIdAsync_WithInvalidId_ThrowsKeyNotFoundException()
+    public async Task GetByIdAsync_WhenVariantDoesNotExist_ShouldThrowKeyNotFoundException()
     {
         // Arrange
-        var id = Guid.NewGuid();
-        _mockVariantRepo.Setup(r => r.GetByIdAsync(id))
+        var variantId = Guid.NewGuid();
+
+        _variantRepoMock
+            .Setup(repo => repo.GetByIdAsync(variantId))
             .ReturnsAsync((ProductVariant?)null);
 
-        // Act & Assert
-        await Assert.ThrowsAsync<KeyNotFoundException>(() => _service.GetByIdAsync(id));
+        // Act
+        var exception = await Assert.ThrowsAsync<KeyNotFoundException>(
+            () => _variantService.GetByIdAsync(variantId));
+
+        // Assert
+        Assert.Equal($"Variant id '{variantId}' not found.", exception.Message);
     }
 
-    #endregion
-
-    #region GetByProductIdAsync Tests
-
     [Fact]
-    public async Task GetByProductIdAsync_WithValidProductId_ReturnsVariants()
+    public async Task GetByProductIdAsync_ShouldReturnVariantDtos()
     {
         // Arrange
         var productId = Guid.NewGuid();
+
         var variants = new List<ProductVariant>
         {
-            new() { Id = Guid.NewGuid(), Sku = "SKU-001", Price = 100 },
-            new() { Id = Guid.NewGuid(), Sku = "SKU-002", Price = 200 }
+            CreateVariant(productId: productId),
+            CreateVariant(productId: productId, sku: "SKU-2")
         };
 
-        _mockVariantRepo.Setup(r => r.GetByProductIdAsync(productId))
+        _variantRepoMock
+            .Setup(repo => repo.GetByProductIdAsync(productId))
             .ReturnsAsync(variants);
 
         // Act
-        var result = await _service.GetByProductIdAsync(productId);
+        var result = await _variantService.GetByProductIdAsync(productId);
 
         // Assert
         Assert.Equal(2, result.Count);
+        Assert.Equal("SKU-1", result[0].Sku);
+        Assert.Equal("SKU-2", result[1].Sku);
     }
 
     [Fact]
-    public async Task GetByProductIdAsync_WithNoVariants_ReturnsEmptyList()
+    public async Task CreateAsync_WhenProductDoesNotExist_ShouldThrowKeyNotFoundException()
     {
         // Arrange
         var productId = Guid.NewGuid();
-        _mockVariantRepo.Setup(r => r.GetByProductIdAsync(productId))
-            .ReturnsAsync(new List<ProductVariant>());
+
+        var request = CreateVariantRequest();
+
+        _productRepoMock
+            .Setup(repo => repo.GetByIdAsync(productId))
+            .ReturnsAsync((Product?)null);
 
         // Act
-        var result = await _service.GetByProductIdAsync(productId);
+        var exception = await Assert.ThrowsAsync<KeyNotFoundException>(
+            () => _variantService.CreateAsync(productId, request));
 
         // Assert
-        Assert.Empty(result);
+        Assert.Equal($"Product with ID {productId} not found.", exception.Message);
+
+        _variantRepoMock.Verify(repo => repo.AddAsync(It.IsAny<ProductVariant>()), Times.Never);
     }
 
-    #endregion
-
-    #region CreateAsync Tests
-
     [Fact]
-    public async Task CreateAsync_WithValidRequest_ReturnsVariantId()
+    public async Task CreateAsync_WhenSkuAlreadyExists_ShouldThrowInvalidOperationException()
     {
         // Arrange
         var productId = Guid.NewGuid();
-        var request = new CreateProductVariantRequest
-        {
-            Sku = "SKU-001",
-            Price = 100,
-            Stock = 10,
-            AttributeValueIds = new List<Guid>(),
-            Images = new List<CreateProductVariantImageRequest>()
-        };
 
-        var product = new Product { Id = productId };
+        var request = CreateVariantRequest();
 
-        _mockProductRepo.Setup(r => r.GetByIdAsync(productId))
-            .ReturnsAsync(product);
-        _mockVariantRepo.Setup(r => r.IsSkuUniqueAsync(request.Sku))
+        _productRepoMock
+            .Setup(repo => repo.GetByIdAsync(productId))
+            .ReturnsAsync(new Product());
+
+        _variantRepoMock
+            .Setup(repo => repo.IsSkuUniqueAsync(request.Sku, null))
+            .ReturnsAsync(false);
+
+        // Act
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => _variantService.CreateAsync(productId, request));
+
+        // Assert
+        Assert.Equal($"SKU '{request.Sku}' already exists.", exception.Message);
+
+        _variantRepoMock.Verify(repo => repo.AddAsync(It.IsAny<ProductVariant>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateAsync_WhenCombinationAlreadyExists_ShouldThrowInvalidOperationException()
+    {
+        // Arrange
+        var productId = Guid.NewGuid();
+
+        var request = CreateVariantRequest();
+
+        var existingVariant = CreateVariant(
+            productId: productId,
+            attributeValueIds: request.AttributeValueIds);
+
+        _productRepoMock
+            .Setup(repo => repo.GetByIdAsync(productId))
+            .ReturnsAsync(new Product());
+
+        _variantRepoMock
+            .Setup(repo => repo.IsSkuUniqueAsync(request.Sku, null))
             .ReturnsAsync(true);
-        _mockVariantRepo.Setup(r => r.GetByProductIdAsync(productId))
-            .ReturnsAsync(new List<ProductVariant>());
-        _mockVariantRepo.Setup(r => r.AddAsync(It.IsAny<ProductVariant>()))
+
+        _variantRepoMock
+            .Setup(repo => repo.GetByProductIdAsync(productId))
+            .ReturnsAsync([existingVariant]);
+
+        // Act
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => _variantService.CreateAsync(productId, request));
+
+        // Assert
+        Assert.Equal("Variant combination already exists.", exception.Message);
+
+        _variantRepoMock.Verify(repo => repo.AddAsync(It.IsAny<ProductVariant>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateAsync_WhenRequestIsValid_ShouldCreateVariantAndReturnId()
+    {
+        // Arrange
+        var productId = Guid.NewGuid();
+
+        var request = CreateVariantRequest();
+
+        ProductVariant? createdVariant = null;
+
+        _productRepoMock
+            .Setup(repo => repo.GetByIdAsync(productId))
+            .ReturnsAsync(new Product());
+
+        _variantRepoMock
+            .Setup(repo => repo.IsSkuUniqueAsync(request.Sku, null))
+            .ReturnsAsync(true);
+
+        _variantRepoMock
+            .Setup(repo => repo.GetByProductIdAsync(productId))
+            .ReturnsAsync([]);
+
+        _variantRepoMock
+            .Setup(repo => repo.AddAsync(It.IsAny<ProductVariant>()))
+            .Callback<ProductVariant>(variant => createdVariant = variant)
             .Returns(Task.CompletedTask);
 
         // Act
-        var result = await _service.CreateAsync(productId, request);
+        var result = await _variantService.CreateAsync(productId, request);
 
         // Assert
         Assert.NotEqual(Guid.Empty, result);
-        _mockVariantRepo.Verify(r => r.AddAsync(It.IsAny<ProductVariant>()), Times.Exactly(2));
+
+        Assert.NotNull(createdVariant);
+
+        Assert.Equal(result, createdVariant!.Id);
+        Assert.Equal(productId, createdVariant.ProductId);
+        Assert.Equal(request.Sku, createdVariant.Sku);
+        Assert.Equal(request.Name, createdVariant.Name);
+        Assert.Equal(request.Description, createdVariant.Description);
+        Assert.Equal(request.Price, createdVariant.Price);
+        Assert.Equal(request.CompareAtPrice, createdVariant.CompareAtPrice);
+        Assert.Equal(request.Stock, createdVariant.Stock);
+        Assert.Equal(request.Status, createdVariant.Status);
+
+        Assert.Equal(2, createdVariant.Images.Count);
+        Assert.Equal(2, createdVariant.Attributes.Count);
+
+        _variantRepoMock.Verify(repo => repo.AddAsync(It.IsAny<ProductVariant>()), Times.Once);
+        _unitOfWorkMock.Verify(uow => uow.SaveChangesAsync(), Times.Once);
     }
 
     [Fact]
-    public async Task CreateAsync_WithInvalidProductId_ThrowsKeyNotFoundException()
+    public async Task UpdateAsync_WhenVariantDoesNotExist_ShouldThrowKeyNotFoundException()
     {
         // Arrange
-        var productId = Guid.NewGuid();
-        var request = new CreateProductVariantRequest { Sku = "SKU-001", Price = 100, Stock = 10 };
+        var variantId = Guid.NewGuid();
 
-        _mockProductRepo.Setup(r => r.GetByIdAsync(productId))
-            .ReturnsAsync((Product?)null);
+        var request = UpdateVariantRequest();
 
-        // Act & Assert
-        await Assert.ThrowsAsync<KeyNotFoundException>(() => _service.CreateAsync(productId, request));
-    }
-
-    [Fact]
-    public async Task CreateAsync_WithDuplicateSku_ThrowsInvalidOperationException()
-    {
-        // Arrange
-        var productId = Guid.NewGuid();
-        var request = new CreateProductVariantRequest { Sku = "SKU-001", Price = 100, Stock = 10 };
-        var product = new Product { Id = productId };
-
-        _mockProductRepo.Setup(r => r.GetByIdAsync(productId))
-            .ReturnsAsync(product);
-        _mockVariantRepo.Setup(r => r.IsSkuUniqueAsync(request.Sku))
-            .ReturnsAsync(false);
-
-        // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(() => _service.CreateAsync(productId, request));
-    }
-
-    [Fact]
-    public async Task CreateAsync_WithDuplicateAttributeCombination_ThrowsInvalidOperationException()
-    {
-        // Arrange
-        var productId = Guid.NewGuid();
-        var attrValueId = Guid.NewGuid();
-        var request = new CreateProductVariantRequest
-        {
-            Sku = "SKU-001",
-            Price = 100,
-            Stock = 10,
-            AttributeValueIds = new List<Guid> { attrValueId }
-        };
-
-        var product = new Product { Id = productId };
-        var existingVariant = new ProductVariant
-        {
-            Id = Guid.NewGuid(),
-            Attributes = new List<ProductVariantAttribute>
-            {
-                new() { ProductAttributeValueId = attrValueId }
-            }
-        };
-
-        _mockProductRepo.Setup(r => r.GetByIdAsync(productId))
-            .ReturnsAsync(product);
-        _mockVariantRepo.Setup(r => r.IsSkuUniqueAsync(request.Sku))
-            .ReturnsAsync(true);
-        _mockVariantRepo.Setup(r => r.GetByProductIdAsync(productId))
-            .ReturnsAsync(new List<ProductVariant> { existingVariant });
-
-        // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(() => _service.CreateAsync(productId, request));
-    }
-
-    #endregion
-
-    #region UpdateAsync Tests
-
-    [Fact]
-    public async Task UpdateAsync_WithValidRequest_UpdatesVariant()
-    {
-        // Arrange
-        var id = Guid.NewGuid();
-        var existingVariant = new ProductVariant
-        {
-            Id = id,
-            Sku = "SKU-001",
-            Price = 100,
-            Stock = 10
-        };
-
-        var request = new UpdateProductVariantRequest
-        {
-            Sku = "SKU-002",
-            Price = 150,
-            Stock = 20,
-            Images = new List<UpdateProductVariantImageRequest>()
-        };
-
-        _mockVariantRepo.Setup(r => r.GetByIdAsync(id))
-            .ReturnsAsync(existingVariant);
-        _mockVariantRepo.Setup(r => r.IsSkuUniqueAsync(request.Sku, id))
-            .ReturnsAsync(true);
-        _mockImageRepo.Setup(r => r.GetByVariantIdAsync(id))
-            .ReturnsAsync(new List<ProductVariantImage>());
-        _mockVariantRepo.Setup(r => r.UpdateAsync(It.IsAny<ProductVariant>()))
-            .Returns(Task.CompletedTask);
-
-        // Act
-        await _service.UpdateAsync(id, request);
-
-        // Assert
-        Assert.Equal("SKU-002", existingVariant.Sku);
-        Assert.Equal(150, existingVariant.Price);
-    }
-
-    [Fact]
-    public async Task UpdateAsync_WithInvalidId_ThrowsKeyNotFoundException()
-    {
-        // Arrange
-        var id = Guid.NewGuid();
-        var request = new UpdateProductVariantRequest { Sku = "SKU-001", Price = 100, Stock = 10 };
-
-        _mockVariantRepo.Setup(r => r.GetByIdAsync(id))
+        _variantRepoMock
+            .Setup(repo => repo.GetTrackedByIdAsync(variantId))
             .ReturnsAsync((ProductVariant?)null);
 
-        // Act & Assert
-        await Assert.ThrowsAsync<KeyNotFoundException>(() => _service.UpdateAsync(id, request));
+        // Act
+        var exception = await Assert.ThrowsAsync<KeyNotFoundException>(
+            () => _variantService.UpdateAsync(variantId, request));
+
+        // Assert
+        Assert.Equal($"Variant id '{variantId}' not found.", exception.Message);
     }
 
     [Fact]
-    public async Task UpdateAsync_WithDuplicateSku_ThrowsInvalidOperationException()
+    public async Task UpdateAsync_WhenSkuChangedToExistingSku_ShouldThrowInvalidOperationException()
     {
         // Arrange
-        var id = Guid.NewGuid();
-        var existingVariant = new ProductVariant { Id = id, Sku = "SKU-001" };
-        var request = new UpdateProductVariantRequest { Sku = "SKU-002", Price = 100, Stock = 10 };
+        var variant = CreateVariant(sku: "OLD-SKU");
 
-        _mockVariantRepo.Setup(r => r.GetByIdAsync(id))
-            .ReturnsAsync(existingVariant);
-        _mockVariantRepo.Setup(r => r.IsSkuUniqueAsync(request.Sku, id))
-            .ReturnsAsync(false);
+        var request = UpdateVariantRequest(sku: "NEW-SKU");
 
-        // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(() => _service.UpdateAsync(id, request));
-    }
-
-    #endregion
-
-    #region DeleteAsync Tests
-
-    [Fact]
-    public async Task DeleteAsync_WithValidId_DeletesVariant()
-    {
-        // Arrange
-        var id = Guid.NewGuid();
-        var variant = new ProductVariant { Id = id };
-
-        _mockVariantRepo.Setup(r => r.GetByIdAsync(id))
+        _variantRepoMock
+            .Setup(repo => repo.GetTrackedByIdAsync(variant.Id))
             .ReturnsAsync(variant);
-        _mockVariantRepo.Setup(r => r.DeleteAsync(It.IsAny<ProductVariant>()))
-            .Returns(Task.CompletedTask);
+
+        _variantRepoMock
+            .Setup(repo => repo.IsSkuUniqueAsync(request.Sku, variant.Id))
+            .ReturnsAsync(false);
 
         // Act
-        await _service.DeleteAsync(id);
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => _variantService.UpdateAsync(variant.Id, request));
 
         // Assert
-        _mockVariantRepo.Verify(r => r.DeleteAsync(It.IsAny<ProductVariant>()), Times.Once);
+        Assert.Equal($"SKU '{request.Sku}' already exists.", exception.Message);
+
+        _unitOfWorkMock.Verify(uow => uow.SaveChangesAsync(), Times.Never);
     }
 
     [Fact]
-    public async Task DeleteAsync_WithInvalidId_ThrowsKeyNotFoundException()
+    public async Task UpdateAsync_WhenSkuUnchanged_ShouldUpdateVariantWithoutCheckingSkuUniqueness()
     {
         // Arrange
-        var id = Guid.NewGuid();
-        _mockVariantRepo.Setup(r => r.GetByIdAsync(id))
-            .ReturnsAsync((ProductVariant?)null);
+        var variant = CreateVariant(sku: "SKU-1");
 
-        // Act & Assert
-        await Assert.ThrowsAsync<KeyNotFoundException>(() => _service.DeleteAsync(id));
+        var request = UpdateVariantRequest(sku: "SKU-1");
+
+        _variantRepoMock
+            .Setup(repo => repo.GetTrackedByIdAsync(variant.Id))
+            .ReturnsAsync(variant);
+
+        // Act
+        await _variantService.UpdateAsync(variant.Id, request);
+
+        // Assert
+        Assert.Equal(request.Name, variant.Name);
+        Assert.Equal(request.Description, variant.Description);
+        Assert.Equal(request.Price, variant.Price);
+        Assert.Equal(request.CompareAtPrice, variant.CompareAtPrice);
+        Assert.Equal(request.Stock, variant.Stock);
+        Assert.Equal(request.Status, variant.Status);
+
+        _variantRepoMock.Verify(
+            repo => repo.IsSkuUniqueAsync(It.IsAny<string>(), It.IsAny<Guid?>()),
+            Times.Never);
+
+        _unitOfWorkMock.Verify(uow => uow.SaveChangesAsync(), Times.Once);
     }
 
-    #endregion
+    [Fact]
+    public async Task UpdateAsync_WhenSkuChangedToUniqueSku_ShouldUpdateVariant()
+    {
+        // Arrange
+        var variant = CreateVariant(sku: "OLD-SKU");
 
-    #region ValidateVariantCombinationAsync Tests
+        var request = UpdateVariantRequest(sku: "NEW-SKU");
+
+        _variantRepoMock
+            .Setup(repo => repo.GetTrackedByIdAsync(variant.Id))
+            .ReturnsAsync(variant);
+
+        _variantRepoMock
+            .Setup(repo => repo.IsSkuUniqueAsync(request.Sku, variant.Id))
+            .ReturnsAsync(true);
+
+        // Act
+        await _variantService.UpdateAsync(variant.Id, request);
+
+        // Assert
+        Assert.Equal("NEW-SKU", variant.Sku);
+
+        _variantRepoMock.Verify(
+            repo => repo.IsSkuUniqueAsync(request.Sku, variant.Id),
+            Times.Once);
+
+        _unitOfWorkMock.Verify(uow => uow.SaveChangesAsync(), Times.Once);
+    }
 
     [Fact]
-    public async Task ValidateVariantCombinationAsync_WithUniqueCombo_ReturnsTrue()
+    public async Task UpdateAsync_WhenImagesProvided_ShouldReplaceImages()
+    {
+        // Arrange
+        var variant = CreateVariant();
+
+        var request = UpdateVariantRequest();
+
+        _variantRepoMock
+            .Setup(repo => repo.GetTrackedByIdAsync(variant.Id))
+            .ReturnsAsync(variant);
+
+        // Act
+        await _variantService.UpdateAsync(variant.Id, request);
+
+        // Assert
+        Assert.Equal(2, variant.Images.Count);
+
+        Assert.Equal("updated-image-1.jpg", variant.Images.ToList()[0].Url);
+        Assert.Equal("updated-image-2.jpg", variant.Images.ToList()[1].Url);
+
+        _variantRepoMock.Verify(
+            repo => repo.RemoveImages(It.IsAny<IEnumerable<ProductVariantImage>>()),
+            Times.Once);
+
+        _unitOfWorkMock.Verify(uow => uow.SaveChangesAsync(), Times.Once);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_WhenImagesNull_ShouldNotReplaceImages()
+    {
+        // Arrange
+        var variant = CreateVariant();
+
+        var request = UpdateVariantRequest();
+        request.Images = null;
+
+        _variantRepoMock
+            .Setup(repo => repo.GetTrackedByIdAsync(variant.Id))
+            .ReturnsAsync(variant);
+
+        // Act
+        await _variantService.UpdateAsync(variant.Id, request);
+
+        // Assert
+        Assert.Equal(2, variant.Images.Count);
+
+        _variantRepoMock.Verify(
+            repo => repo.RemoveImages(It.IsAny<IEnumerable<ProductVariantImage>>()),
+            Times.Never);
+
+        _unitOfWorkMock.Verify(uow => uow.SaveChangesAsync(), Times.Once);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_ShouldReplaceAttributes()
+    {
+        // Arrange
+        var variant = CreateVariant();
+
+        var request = UpdateVariantRequest();
+
+        _variantRepoMock
+            .Setup(repo => repo.GetTrackedByIdAsync(variant.Id))
+            .ReturnsAsync(variant);
+
+        // Act
+        await _variantService.UpdateAsync(variant.Id, request);
+
+        // Assert
+        Assert.Equal(2, variant.Attributes.Count);
+
+        _variantRepoMock.Verify(
+            repo => repo.RemoveAttributes(It.IsAny<IEnumerable<ProductVariantAttribute>>()),
+            Times.Once);
+
+        _unitOfWorkMock.Verify(uow => uow.SaveChangesAsync(), Times.Once);
+    }
+
+    [Fact]
+    public async Task DeleteDraftAsync_WhenVariantExists_ShouldDeleteVariant()
+    {
+        // Arrange
+        var variant = CreateVariant();
+
+        _variantRepoMock
+            .Setup(repo => repo.GetTrackedByIdAsync(variant.Id))
+            .ReturnsAsync(variant);
+
+        // Act
+        await _variantService.DeleteDraftAsync(variant.Id);
+
+        // Assert
+        _variantRepoMock.Verify(repo => repo.Delete(variant), Times.Once);
+        _unitOfWorkMock.Verify(uow => uow.SaveChangesAsync(), Times.Once);
+    }
+
+    [Fact]
+    public async Task DeleteDraftAsync_WhenVariantDoesNotExist_ShouldThrowKeyNotFoundException()
+    {
+        // Arrange
+        var variantId = Guid.NewGuid();
+
+        _variantRepoMock
+            .Setup(repo => repo.GetTrackedByIdAsync(variantId))
+            .ReturnsAsync((ProductVariant?)null);
+
+        // Act
+        var exception = await Assert.ThrowsAsync<KeyNotFoundException>(
+            () => _variantService.DeleteDraftAsync(variantId));
+
+        // Assert
+        Assert.Equal($"Variant id '{variantId}' not found.", exception.Message);
+
+        _variantRepoMock.Verify(repo => repo.Delete(It.IsAny<ProductVariant>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task RemoveAllVariantsAsync_ShouldDeleteAllVariants()
     {
         // Arrange
         var productId = Guid.NewGuid();
-        var attrValues = new List<Guid> { Guid.NewGuid(), Guid.NewGuid() };
-        var existingVariants = new List<ProductVariant>
+
+        var variants = new List<ProductVariant>
         {
-            new()
-            {
-                Attributes = new List<ProductVariantAttribute>
-                {
-                    new() { ProductAttributeValueId = Guid.NewGuid() }
-                }
-            }
+            CreateVariant(productId: productId),
+            CreateVariant(productId: productId, sku: "SKU-2")
         };
 
-        _mockVariantRepo.Setup(r => r.GetByProductIdAsync(productId))
-            .ReturnsAsync(existingVariants);
+        _variantRepoMock
+            .Setup(repo => repo.GetTrackedByProductIdAsync(productId))
+            .ReturnsAsync(variants);
 
         // Act
-        var result = await _service.ValidateVariantCombinationAsync(productId, attrValues);
+        await _variantService.RemoveAllVariantsAsync(productId);
+
+        // Assert
+        _variantRepoMock.Verify(repo => repo.DeleteRange(variants), Times.Once);
+        _unitOfWorkMock.Verify(uow => uow.SaveChangesAsync(), Times.Once);
+    }
+
+    [Fact]
+    public async Task IsCombinationUniqueAsync_WhenCombinationExists_ShouldReturnFalse()
+    {
+        // Arrange
+        var productId = Guid.NewGuid();
+
+        var attributeValueIds = new List<Guid>
+        {
+            Guid.NewGuid(),
+            Guid.NewGuid()
+        };
+
+        var variants = new List<ProductVariant>
+        {
+            CreateVariant(productId: productId, attributeValueIds: attributeValueIds)
+        };
+
+        _variantRepoMock
+            .Setup(repo => repo.GetByProductIdAsync(productId))
+            .ReturnsAsync(variants);
+
+        // Act
+        var result = await _variantService.IsCombinationUniqueAsync(
+            productId,
+            attributeValueIds);
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task IsCombinationUniqueAsync_WhenCombinationDoesNotExist_ShouldReturnTrue()
+    {
+        // Arrange
+        var productId = Guid.NewGuid();
+
+        var existingIds = new List<Guid>
+        {
+            Guid.NewGuid(),
+            Guid.NewGuid()
+        };
+
+        var newIds = new List<Guid>
+        {
+            Guid.NewGuid(),
+            Guid.NewGuid()
+        };
+
+        var variants = new List<ProductVariant>
+        {
+            CreateVariant(productId: productId, attributeValueIds: existingIds)
+        };
+
+        _variantRepoMock
+            .Setup(repo => repo.GetByProductIdAsync(productId))
+            .ReturnsAsync(variants);
+
+        // Act
+        var result = await _variantService.IsCombinationUniqueAsync(
+            productId,
+            newIds);
 
         // Assert
         Assert.True(result);
     }
 
     [Fact]
-    public async Task ValidateVariantCombinationAsync_WithDuplicateCombo_ReturnsFalse()
+    public void MapToProductVariantDto_ShouldMapVariantToDto()
     {
         // Arrange
-        var productId = Guid.NewGuid();
-        var attrValue = Guid.NewGuid();
-        var attrValues = new List<Guid> { attrValue };
-        var existingVariants = new List<ProductVariant>
-        {
-            new()
-            {
-                Attributes = new List<ProductVariantAttribute>
-                {
-                    new() { ProductAttributeValueId = attrValue }
-                }
-            }
-        };
-
-        _mockVariantRepo.Setup(r => r.GetByProductIdAsync(productId))
-            .ReturnsAsync(existingVariants);
+        var variant = CreateVariant();
 
         // Act
-        var result = await _service.ValidateVariantCombinationAsync(productId, attrValues);
+        var result = ProductVariantService.MapToProductVariantDto(variant);
 
         // Assert
-        Assert.False(result);
+        Assert.Equal(variant.Id, result.Id);
+        Assert.Equal(variant.Sku, result.Sku);
+        Assert.Equal(variant.Name, result.Name);
+        Assert.Equal(variant.Description, result.Description);
+        Assert.Equal(variant.Price, result.Price);
+        Assert.Equal(variant.CompareAtPrice, result.CompareAtPrice);
+        Assert.Equal(variant.Stock, result.Stock);
+        Assert.Equal(variant.Status, result.Status);
+
+        Assert.Equal(2, result.Images.Count);
+
+        Assert.Equal("image-1.jpg", result.Images[0].Url);
+        Assert.Equal(1, result.Images[0].SortOrder);
+
+        Assert.Equal("image-2.jpg", result.Images[1].Url);
+        Assert.Equal(2, result.Images[1].SortOrder);
+
+        Assert.Equal(2, result.Attributes.Count);
+
+        Assert.Equal("Color", result.Attributes[0].AttributeName);
+        Assert.Equal("Black", result.Attributes[0].AttributeValue);
+
+        Assert.Equal("Color", result.Attributes[1].AttributeName);
+        Assert.Equal("Black", result.Attributes[1].AttributeValue);
     }
 
-    #endregion
+    private static ProductVariant CreateVariant(
+        Guid? productId = null,
+        string sku = "SKU-1",
+        List<Guid>? attributeValueIds = null)
+    {
+        productId ??= Guid.NewGuid();
+
+        attributeValueIds ??=
+        [
+            Guid.NewGuid(),
+            Guid.NewGuid()
+        ];
+
+        var attributeId = Guid.NewGuid();
+
+        return new ProductVariant
+        {
+            Id = Guid.NewGuid(),
+            ProductId = productId.Value,
+            Sku = sku,
+            Name = "Variant Name",
+            Description = "Variant Description",
+            Price = 999,
+            CompareAtPrice = 1099,
+            Stock = 10,
+            Status = ProductVariantStatus.Active,
+            CreatedAt = DateTime.UtcNow,
+
+            Images =
+            [
+                new ProductVariantImage
+                {
+                    Id = Guid.NewGuid(),
+                    Url = "image-2.jpg",
+                    SortOrder = 2,
+                    IsPrimary = false
+                },
+                new ProductVariantImage
+                {
+                    Id = Guid.NewGuid(),
+                    Url = "image-1.jpg",
+                    SortOrder = 1,
+                    IsPrimary = true
+                }
+            ],
+
+            Attributes = attributeValueIds
+                .Select(id => new ProductVariantAttribute
+                {
+                    ProductAttributeValueId = id,
+
+                    ProductAttributeValue = new ProductAttributeValue
+                    {
+                        Id = id,
+                        Value = "Black",
+
+                        ProductAttributeId = attributeId,
+
+                        ProductAttribute = new ProductAttribute
+                        {
+                            Id = attributeId,
+                            Name = "Color"
+                        }
+                    }
+                })
+                .ToList()
+        };
+    }
+
+    private static CreateProductVariantRequest CreateVariantRequest()
+    {
+        return new CreateProductVariantRequest
+        {
+            Sku = "SKU-1",
+            Name = "Variant Name",
+            Description = "Variant Description",
+            Price = 999,
+            CompareAtPrice = 1099,
+            Stock = 10,
+            Status = ProductVariantStatus.Active,
+
+            Images =
+            [
+                new ProductVariantImageRequest
+                {
+                    Url = "image-1.jpg",
+                    SortOrder = 1,
+                    IsPrimary = true
+                },
+                new ProductVariantImageRequest
+                {
+                    Url = "image-2.jpg",
+                    SortOrder = 2,
+                    IsPrimary = false
+                }
+            ],
+
+            AttributeValueIds =
+            [
+                Guid.NewGuid(),
+                Guid.NewGuid()
+            ]
+        };
+    }
+
+    private static UpdateProductVariantRequest UpdateVariantRequest(
+        string sku = "SKU-1")
+    {
+        return new UpdateProductVariantRequest
+        {
+            Sku = sku,
+            Name = "Updated Variant",
+            Description = "Updated Description",
+            Price = 1999,
+            CompareAtPrice = 2099,
+            Stock = 20,
+            Status = ProductVariantStatus.Inactive,
+
+            Images =
+            [
+                new ProductVariantImageRequest
+                {
+                    Url = "updated-image-1.jpg",
+                    SortOrder = 1,
+                    IsPrimary = true
+                },
+                new ProductVariantImageRequest
+                {
+                    Url = "updated-image-2.jpg",
+                    SortOrder = 2,
+                    IsPrimary = false
+                }
+            ],
+
+            AttributeValueIds =
+            [
+                Guid.NewGuid(),
+                Guid.NewGuid()
+            ]
+        };
+    }
 }
