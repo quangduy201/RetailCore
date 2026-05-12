@@ -84,6 +84,7 @@ public class ProductService : IProductService
 
         var product = new Product
         {
+            Id = Guid.NewGuid(),
             Name = request.Name,
             Slug = request.Slug,
             ShortDescription = request.ShortDescription,
