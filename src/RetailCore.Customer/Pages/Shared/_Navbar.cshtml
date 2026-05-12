@@ -1,9 +1,15 @@
+@using System.Security.Claims
+@{
+    var avatarUrl = User.FindFirst("avatar_url")?.Value;
+    var fullName = User.FindFirst(ClaimTypes.Name)?.Value;
+}
+
 <header>
     <nav class="navbar navbar-expand-lg navbar-light">
         <div class="container-lg">
             <a asp-page="/Index" class="navbar-brand">
                 <i class="fas fa-microchip me-2" style="color: var(--primary-color);"></i>
-                <span class="gradient-text">TechHub</span>
+                <span class="gradient-text">RetailCore</span>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
@@ -26,6 +32,57 @@
                         <span class="cart-badge">3</span>
                     </a>
                 </div>
+                @if (User.Identity?.IsAuthenticated ?? false)
+                {
+                    <div class="dropdown">
+                        <button class="btn d-flex align-items-center gap-2 border-0 bg-transparent"
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                            @if (!string.IsNullOrWhiteSpace(avatarUrl))
+                            {
+                                <img src="@avatarUrl" alt="@fullName" class="rounded-circle object-fit-cover" width="40"
+                                     height="40" />
+                            }
+                            else
+                            {
+                                <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center"
+                                     style="width: 40px; height: 40px;">
+                                    @(fullName?.FirstOrDefault())
+                                </div>
+                            }
+                        </button>
+
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
+                            <li class="px-3 py-2">
+                                <div class="fw-semibold">@fullName</div>
+                                <small class="text-muted">@User.FindFirst(ClaimTypes.Email)?.Value</small>
+                            </li>
+
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+
+                            <li>
+                                <a class="dropdown-item" asp-page="/Orders/History">
+                                    My Orders
+                                </a>
+                            </li>
+
+                            <li>
+                                <form method="post" asp-page="/Auth/Logout">
+                                    <button type="submit" class="dropdown-item text-danger">
+                                        Logout
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                }
+                else
+                {
+                    <a asp-page="/Auth/Login" class="btn btn-primary">
+                        Login
+                    </a>
+                }
             </div>
         </div>
     </nav>
