@@ -1,7 +1,3 @@
-using Moq;
-using RetailCore.Repositories.Entities;
-using RetailCore.Repositories.Repositories.Interfaces;
-using RetailCore.Services.Implementations;
 using RetailCore.Shared.Enums;
 using RetailCore.Shared.Requests.Category;
 
@@ -9,299 +5,533 @@ namespace RetailCore.UnitTests.Services;
 
 public class CategoryServiceTests
 {
-    private readonly Mock<ICategoryRepository> _mockRepo;
-    private readonly CategoryService _service;
+    private readonly Mock<ICategoryRepository> _categoryRepoMock;
+    private readonly CategoryService _categoryService;
 
     public CategoryServiceTests()
     {
-        _mockRepo = new Mock<ICategoryRepository>();
-        _service = new CategoryService(_mockRepo.Object);
+        _categoryRepoMock = new Mock<ICategoryRepository>();
+        _categoryService = new CategoryService(_categoryRepoMock.Object);
     }
 
-    #region GetPagedAsync Tests
-
     [Fact]
-    public async Task GetPagedAsync_WithValidRequest_ReturnsPagedResult()
+    public async Task GetPagedAsync_ShouldReturnPagedCategorySummaryDtos()
     {
         // Arrange
-        var request = new GetCategoriesRequest { PageNumber = 1, PageSize = 10 };
-        var categories = new List<Category>
+        var request = new GetCategoriesRequest
         {
-            new() { Id = Guid.NewGuid(), Name = "Cat 1", Slug = "cat-1", Status = CategoryStatus.Active },
-            new() { Id = Guid.NewGuid(), Name = "Cat 2", Slug = "cat-2", Status = CategoryStatus.Active }
+            Keyword = "phone",
+            Status = CategoryStatus.Active,
+            PageNumber = 1,
+            PageSize = 10
         };
 
-        _mockRepo.Setup(r => r.GetPagedAsync(It.IsAny<string>(), It.IsAny<CategoryStatus?>(), It.IsAny<int>(), It.IsAny<int>()))
-            .ReturnsAsync((categories, 2));
-
-        // Act
-        var result = await _service.GetPagedAsync(request);
-
-        // Assert
-        Assert.NotNull(result);
-        Assert.Equal(2, result.Items.Count());
-        Assert.Equal(2, result.TotalCount);
-    }
-
-    [Fact]
-    public async Task GetPagedAsync_WithEmptyResult_ReturnsEmptyCollection()
-    {
-        // Arrange
-        var request = new GetCategoriesRequest { PageNumber = 1, PageSize = 10 };
-        _mockRepo.Setup(r => r.GetPagedAsync(It.IsAny<string>(), It.IsAny<CategoryStatus?>(), It.IsAny<int>(), It.IsAny<int>()))
-            .ReturnsAsync((new List<Category>(), 0));
-
-        // Act
-        var result = await _service.GetPagedAsync(request);
-
-        // Assert
-        Assert.Empty(result.Items);
-        Assert.Equal(0, result.TotalCount);
-    }
-
-    #endregion
-
-    #region GetPagedForManagementAsync Tests
-
-    [Fact]
-    public async Task GetPagedForManagementAsync_WithValidRequest_ReturnsDetailDtos()
-    {
-        // Arrange
-        var request = new GetCategoriesRequest { PageNumber = 1, PageSize = 10 };
         var categories = new List<Category>
         {
-            new() { Id = Guid.NewGuid(), Name = "Cat 1", Slug = "cat-1", Description = "Desc 1", Status = CategoryStatus.Active, CreatedAt = DateTime.UtcNow }
+            new()
+            {
+                Id = Guid.NewGuid(),
+                Name = "Phones",
+                Slug = "phones",
+                Description = "Phone category",
+                Status = CategoryStatus.Active
+            },
+            new()
+            {
+                Id = Guid.NewGuid(),
+                Name = "Phone Accessories",
+                Slug = "phone-accessories",
+                Description = "Accessories category",
+                Status = CategoryStatus.Active
+            }
         };
 
-        _mockRepo.Setup(r => r.GetPagedAsync(It.IsAny<string>(), It.IsAny<CategoryStatus?>(), It.IsAny<int>(), It.IsAny<int>()))
-            .ReturnsAsync((categories, 1));
+        _categoryRepoMock
+            .Setup(repo => repo.GetPagedAsync(
+                request.Keyword,
+                request.Status,
+                request.PageNumber,
+                request.PageSize))
+            .ReturnsAsync((categories, categories.Count));
 
         // Act
-        var result = await _service.GetPagedForManagementAsync(request);
+        var result = await _categoryService.GetPagedAsync(request);
 
         // Assert
-        Assert.Single(result.Items);
+        Assert.Equal(request.PageNumber, result.PageNumber);
+        Assert.Equal(request.PageSize, result.PageSize);
+        Assert.Equal(categories.Count, result.TotalCount);
+
+        var items = result.Items.ToList();
+
+        Assert.Equal(2, items.Count);
+        Assert.Equal(categories[0].Id, items[0].Id);
+        Assert.Equal("Phones", items[0].Name);
+        Assert.Equal("phones", items[0].Slug);
+        Assert.Equal("Phone category", items[0].Description);
+
+        Assert.Equal(categories[1].Id, items[1].Id);
+        Assert.Equal("Phone Accessories", items[1].Name);
+        Assert.Equal("phone-accessories", items[1].Slug);
+        Assert.Equal("Accessories category", items[1].Description);
     }
 
-    #endregion
-
-    #region GetByIdAsync Tests
-
     [Fact]
-    public async Task GetByIdAsync_WithValidId_ReturnsCategory()
+    public async Task GetPagedForManagementAsync_ShouldReturnPagedCategoryDetailDtos()
     {
         // Arrange
-        var id = Guid.NewGuid();
-        var category = new Category { Id = id, Name = "Test Category", Slug = "test-cat", Status = CategoryStatus.Active };
+        var request = new GetCategoriesRequest
+        {
+            Keyword = null,
+            Status = CategoryStatus.Active,
+            PageNumber = 1,
+            PageSize = 10
+        };
 
-        _mockRepo.Setup(r => r.GetByIdAsync(id))
+        var createdAt = DateTime.UtcNow;
+
+        var categories = new List<Category>
+        {
+            new()
+            {
+                Id = Guid.NewGuid(),
+                Name = "Laptops",
+                Slug = "laptops",
+                Description = "Laptop category",
+                Status = CategoryStatus.Active,
+                CreatedAt = createdAt
+            }
+        };
+
+        _categoryRepoMock
+            .Setup(repo => repo.GetPagedAsync(
+                request.Keyword,
+                request.Status,
+                request.PageNumber,
+                request.PageSize))
+            .ReturnsAsync((categories, categories.Count));
+
+        // Act
+        var result = await _categoryService.GetPagedForManagementAsync(request);
+
+        // Assert
+        Assert.Equal(request.PageNumber, result.PageNumber);
+        Assert.Equal(request.PageSize, result.PageSize);
+        Assert.Equal(categories.Count, result.TotalCount);
+
+        var item = Assert.Single(result.Items);
+
+        Assert.Equal(categories[0].Id, item.Id);
+        Assert.Equal("Laptops", item.Name);
+        Assert.Equal("laptops", item.Slug);
+        Assert.Equal("Laptop category", item.Description);
+        Assert.Equal(CategoryStatus.Active, item.Status);
+        Assert.Equal(createdAt, item.CreatedAt);
+    }
+
+    [Fact]
+    public async Task GetByIdAsync_WhenCategoryExists_ShouldReturnCategoryDetailDto()
+    {
+        // Arrange
+        var categoryId = Guid.NewGuid();
+
+        var category = new Category
+        {
+            Id = categoryId,
+            Name = "Laptops",
+            Slug = "laptops",
+            Description = "Laptop category",
+            Status = CategoryStatus.Active,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _categoryRepoMock
+            .Setup(repo => repo.GetByIdAsync(categoryId))
             .ReturnsAsync(category);
 
         // Act
-        var result = await _service.GetByIdAsync(id);
+        var result = await _categoryService.GetByIdAsync(categoryId);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal(id, result.Id);
-        Assert.Equal("Test Category", result.Name);
+        Assert.Equal(category.Id, result.Id);
+        Assert.Equal(category.Name, result.Name);
+        Assert.Equal(category.Slug, result.Slug);
+        Assert.Equal(category.Description, result.Description);
+        Assert.Equal(category.Status, result.Status);
+        Assert.Equal(category.CreatedAt, result.CreatedAt);
     }
 
     [Fact]
-    public async Task GetByIdAsync_WithInvalidId_ThrowsKeyNotFoundException()
+    public async Task GetByIdAsync_WhenCategoryDoesNotExist_ShouldThrowKeyNotFoundException()
     {
         // Arrange
-        var id = Guid.NewGuid();
-        _mockRepo.Setup(r => r.GetByIdAsync(id))
+        var categoryId = Guid.NewGuid();
+
+        _categoryRepoMock
+            .Setup(repo => repo.GetByIdAsync(categoryId))
             .ReturnsAsync((Category?)null);
 
-        // Act & Assert
-        await Assert.ThrowsAsync<KeyNotFoundException>(() => _service.GetByIdAsync(id));
+        // Act
+        var exception = await Assert.ThrowsAsync<KeyNotFoundException>(
+            () => _categoryService.GetByIdAsync(categoryId));
+
+        // Assert
+        Assert.Equal($"Category id '{categoryId}' not found.", exception.Message);
     }
 
-    #endregion
-
-    #region GetBySlugAsync Tests
-
     [Fact]
-    public async Task GetBySlugAsync_WithValidSlug_ReturnsCategory()
+    public async Task GetBySlugAsync_WhenCategoryExists_ShouldReturnCategoryDetailDto()
     {
         // Arrange
-        const string slug = "test-category";
-        var category = new Category { Id = Guid.NewGuid(), Name = "Test", Slug = slug, Status = CategoryStatus.Active };
+        var slug = "laptops";
 
-        _mockRepo.Setup(r => r.GetBySlugAsync(slug))
+        var category = new Category
+        {
+            Id = Guid.NewGuid(),
+            Name = "Laptops",
+            Slug = slug,
+            Description = "Laptop category",
+            Status = CategoryStatus.Active,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _categoryRepoMock
+            .Setup(repo => repo.GetBySlugAsync(slug))
             .ReturnsAsync(category);
 
         // Act
-        var result = await _service.GetBySlugAsync(slug);
+        var result = await _categoryService.GetBySlugAsync(slug);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal(slug, result.Slug);
+        Assert.Equal(category.Id, result.Id);
+        Assert.Equal(category.Name, result.Name);
+        Assert.Equal(category.Slug, result.Slug);
+        Assert.Equal(category.Description, result.Description);
+        Assert.Equal(category.Status, result.Status);
     }
 
     [Fact]
-    public async Task GetBySlugAsync_WithInvalidSlug_ThrowsKeyNotFoundException()
+    public async Task GetBySlugAsync_WhenCategoryDoesNotExist_ShouldThrowKeyNotFoundException()
     {
         // Arrange
-        const string slug = "invalid-slug";
-        _mockRepo.Setup(r => r.GetBySlugAsync(slug))
+        var slug = "unknown-category";
+
+        _categoryRepoMock
+            .Setup(repo => repo.GetBySlugAsync(slug))
             .ReturnsAsync((Category?)null);
 
-        // Act & Assert
-        await Assert.ThrowsAsync<KeyNotFoundException>(() => _service.GetBySlugAsync(slug));
+        // Act
+        var exception = await Assert.ThrowsAsync<KeyNotFoundException>(
+            () => _categoryService.GetBySlugAsync(slug));
+
+        // Assert
+        Assert.Equal($"Category slug '{slug}' not found.", exception.Message);
     }
 
-    #endregion
-
-    #region CreateAsync Tests
-
     [Fact]
-    public async Task CreateAsync_WithValidRequest_ReturnsCategoryId()
+    public async Task CreateAsync_WhenSlugIsUnique_ShouldCreateCategoryAndReturnId()
     {
         // Arrange
-        var request = new CreateCategoryRequest { Name = "New Cat", Slug = "new-cat", Description = "Test" };
+        var request = new CreateCategoryRequest
+        {
+            Name = "Tablets",
+            Slug = "tablets",
+            Description = "Tablet category"
+        };
 
-        _mockRepo.Setup(r => r.IsSlugUniqueAsync(request.Slug))
+        Category? createdCategory = null;
+
+        _categoryRepoMock
+            .Setup(repo => repo.IsSlugUniqueAsync(request.Slug, null))
             .ReturnsAsync(true);
-        _mockRepo.Setup(r => r.AddAsync(It.IsAny<Category>()))
+
+        _categoryRepoMock
+            .Setup(repo => repo.AddAsync(It.IsAny<Category>()))
+            .Callback<Category>(category => createdCategory = category)
             .Returns(Task.CompletedTask);
 
         // Act
-        var result = await _service.CreateAsync(request);
+        var result = await _categoryService.CreateAsync(request);
 
         // Assert
         Assert.NotEqual(Guid.Empty, result);
-        _mockRepo.Verify(r => r.AddAsync(It.IsAny<Category>()), Times.Once);
+        Assert.NotNull(createdCategory);
+
+        Assert.Equal(result, createdCategory!.Id);
+        Assert.Equal(request.Name, createdCategory.Name);
+        Assert.Equal(request.Slug, createdCategory.Slug);
+        Assert.Equal(request.Description, createdCategory.Description);
+        Assert.Equal(CategoryStatus.Active, createdCategory.Status);
+        Assert.NotEqual(default, createdCategory.CreatedAt);
+
+        _categoryRepoMock.Verify(repo => repo.AddAsync(It.IsAny<Category>()), Times.Once);
     }
 
     [Fact]
-    public async Task CreateAsync_WithDuplicateSlug_ThrowsInvalidOperationException()
+    public async Task CreateAsync_WhenSlugAlreadyExists_ShouldThrowInvalidOperationException()
     {
         // Arrange
-        var request = new CreateCategoryRequest { Name = "New Cat", Slug = "existing-slug" };
+        var request = new CreateCategoryRequest
+        {
+            Name = "Laptops",
+            Slug = "laptops",
+            Description = "Duplicate category"
+        };
 
-        _mockRepo.Setup(r => r.IsSlugUniqueAsync(request.Slug))
+        _categoryRepoMock
+            .Setup(repo => repo.IsSlugUniqueAsync(request.Slug, null))
             .ReturnsAsync(false);
 
-        // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(() => _service.CreateAsync(request));
-        _mockRepo.Verify(r => r.AddAsync(It.IsAny<Category>()), Times.Never);
-    }
-
-    [Fact]
-    public async Task CreateAsync_CreatedCategoryHasActiveStatus()
-    {
-        // Arrange
-        var request = new CreateCategoryRequest { Name = "New Cat", Slug = "new-cat" };
-        Category? capturedCategory = null;
-
-        _mockRepo.Setup(r => r.IsSlugUniqueAsync(request.Slug))
-            .ReturnsAsync(true);
-        _mockRepo.Setup(r => r.AddAsync(It.IsAny<Category>()))
-            .Callback<Category>(c => capturedCategory = c)
-            .Returns(Task.CompletedTask);
-
         // Act
-        await _service.CreateAsync(request);
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => _categoryService.CreateAsync(request));
 
         // Assert
-        Assert.NotNull(capturedCategory);
-        Assert.Equal(CategoryStatus.Active, capturedCategory.Status);
-    }
+        Assert.Equal($"Category slug '{request.Slug}' already exists.", exception.Message);
 
-    #endregion
-
-    #region UpdateAsync Tests
-
-    [Fact]
-    public async Task UpdateAsync_WithValidRequest_UpdatesCategory()
-    {
-        // Arrange
-        var id = Guid.NewGuid();
-        var existingCategory = new Category { Id = id, Name = "Old", Slug = "old-slug", Status = CategoryStatus.Active };
-        var request = new UpdateCategoryRequest { Name = "Updated", Slug = "updated-slug", Status = CategoryStatus.Inactive };
-
-        _mockRepo.Setup(r => r.GetByIdAsync(id))
-            .ReturnsAsync(existingCategory);
-        _mockRepo.Setup(r => r.IsSlugUniqueAsync(request.Slug, id))
-            .ReturnsAsync(true);
-        _mockRepo.Setup(r => r.UpdateAsync(It.IsAny<Category>()))
-            .Returns(Task.CompletedTask);
-
-        // Act
-        await _service.UpdateAsync(id, request);
-
-        // Assert
-        _mockRepo.Verify(r => r.UpdateAsync(It.IsAny<Category>()), Times.Once);
-        Assert.Equal("Updated", existingCategory.Name);
+        _categoryRepoMock.Verify(repo => repo.AddAsync(It.IsAny<Category>()), Times.Never);
     }
 
     [Fact]
-    public async Task UpdateAsync_WithInvalidId_ThrowsKeyNotFoundException()
+    public async Task UpdateAsync_WhenCategoryExistsAndSlugUnchanged_ShouldUpdateCategory()
     {
         // Arrange
-        var id = Guid.NewGuid();
-        var request = new UpdateCategoryRequest { Name = "Test", Slug = "test" };
+        var categoryId = Guid.NewGuid();
 
-        _mockRepo.Setup(r => r.GetByIdAsync(id))
-            .ReturnsAsync((Category?)null);
+        var category = new Category
+        {
+            Id = categoryId,
+            Name = "Old Name",
+            Slug = "laptops",
+            Description = "Old description",
+            Status = CategoryStatus.Active,
+            CreatedAt = DateTime.UtcNow
+        };
 
-        // Act & Assert
-        await Assert.ThrowsAsync<KeyNotFoundException>(() => _service.UpdateAsync(id, request));
-    }
+        var request = new UpdateCategoryRequest
+        {
+            Name = "Laptops",
+            Slug = "laptops",
+            Description = "Updated description",
+            Status = CategoryStatus.Inactive
+        };
 
-    [Fact]
-    public async Task UpdateAsync_WithDuplicateSlug_ThrowsInvalidOperationException()
-    {
-        // Arrange
-        var id = Guid.NewGuid();
-        var existingCategory = new Category { Id = id, Name = "Old", Slug = "old-slug" };
-        var request = new UpdateCategoryRequest { Name = "Test", Slug = "new-slug" };
-
-        _mockRepo.Setup(r => r.GetByIdAsync(id))
-            .ReturnsAsync(existingCategory);
-        _mockRepo.Setup(r => r.IsSlugUniqueAsync(request.Slug, id))
-            .ReturnsAsync(false);
-
-        // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(() => _service.UpdateAsync(id, request));
-    }
-
-    #endregion
-
-    #region DeleteAsync Tests
-
-    [Fact]
-    public async Task DeleteAsync_WithValidId_DeletesCategory()
-    {
-        // Arrange
-        var id = Guid.NewGuid();
-        var category = new Category { Id = id, Name = "Test" };
-
-        _mockRepo.Setup(r => r.GetByIdAsync(id))
+        _categoryRepoMock
+            .Setup(repo => repo.GetByIdAsync(categoryId))
             .ReturnsAsync(category);
-        _mockRepo.Setup(r => r.DeleteAsync(It.IsAny<Category>()))
+
+        _categoryRepoMock
+            .Setup(repo => repo.UpdateAsync(It.IsAny<Category>()))
             .Returns(Task.CompletedTask);
 
         // Act
-        await _service.DeleteAsync(id);
+        await _categoryService.UpdateAsync(categoryId, request);
 
         // Assert
-        _mockRepo.Verify(r => r.DeleteAsync(It.IsAny<Category>()), Times.Once);
+        Assert.Equal(request.Name, category.Name);
+        Assert.Equal(request.Slug, category.Slug);
+        Assert.Equal(request.Description, category.Description);
+        Assert.Equal(request.Status, category.Status);
+        Assert.NotNull(category.UpdatedAt);
+
+        _categoryRepoMock.Verify(repo => repo.IsSlugUniqueAsync(It.IsAny<string>(), It.IsAny<Guid?>()), Times.Never);
+        _categoryRepoMock.Verify(repo => repo.UpdateAsync(category), Times.Once);
     }
 
     [Fact]
-    public async Task DeleteAsync_WithInvalidId_ThrowsKeyNotFoundException()
+    public async Task UpdateAsync_WhenCategoryExistsAndSlugChangedToUniqueSlug_ShouldUpdateCategory()
     {
         // Arrange
-        var id = Guid.NewGuid();
-        _mockRepo.Setup(r => r.GetByIdAsync(id))
-            .ReturnsAsync((Category?)null);
+        var categoryId = Guid.NewGuid();
 
-        // Act & Assert
-        await Assert.ThrowsAsync<KeyNotFoundException>(() => _service.DeleteAsync(id));
+        var category = new Category
+        {
+            Id = categoryId,
+            Name = "Old Name",
+            Slug = "old-slug",
+            Description = "Old description",
+            Status = CategoryStatus.Active,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        var request = new UpdateCategoryRequest
+        {
+            Name = "New Name",
+            Slug = "new-slug",
+            Description = "New description",
+            Status = CategoryStatus.Active
+        };
+
+        _categoryRepoMock
+            .Setup(repo => repo.GetByIdAsync(categoryId))
+            .ReturnsAsync(category);
+
+        _categoryRepoMock
+            .Setup(repo => repo.IsSlugUniqueAsync(request.Slug, categoryId))
+            .ReturnsAsync(true);
+
+        _categoryRepoMock
+            .Setup(repo => repo.UpdateAsync(It.IsAny<Category>()))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        await _categoryService.UpdateAsync(categoryId, request);
+
+        // Assert
+        Assert.Equal(request.Name, category.Name);
+        Assert.Equal(request.Slug, category.Slug);
+        Assert.Equal(request.Description, category.Description);
+        Assert.Equal(request.Status, category.Status);
+        Assert.NotNull(category.UpdatedAt);
+
+        _categoryRepoMock.Verify(repo => repo.IsSlugUniqueAsync(request.Slug, categoryId), Times.Once);
+        _categoryRepoMock.Verify(repo => repo.UpdateAsync(category), Times.Once);
     }
 
-    #endregion
+    [Fact]
+    public async Task UpdateAsync_WhenCategoryDoesNotExist_ShouldThrowKeyNotFoundException()
+    {
+        // Arrange
+        var categoryId = Guid.NewGuid();
+
+        var request = new UpdateCategoryRequest
+        {
+            Name = "Laptops",
+            Slug = "laptops",
+            Description = "Laptop category",
+            Status = CategoryStatus.Active
+        };
+
+        _categoryRepoMock
+            .Setup(repo => repo.GetByIdAsync(categoryId))
+            .ReturnsAsync((Category?)null);
+
+        // Act
+        var exception = await Assert.ThrowsAsync<KeyNotFoundException>(
+            () => _categoryService.UpdateAsync(categoryId, request));
+
+        // Assert
+        Assert.Equal($"Category id '{categoryId}' not found.", exception.Message);
+
+        _categoryRepoMock.Verify(repo => repo.UpdateAsync(It.IsAny<Category>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_WhenSlugChangedToExistingSlug_ShouldThrowInvalidOperationException()
+    {
+        // Arrange
+        var categoryId = Guid.NewGuid();
+
+        var category = new Category
+        {
+            Id = categoryId,
+            Name = "Old Category",
+            Slug = "old-category",
+            Description = "Old description",
+            Status = CategoryStatus.Active
+        };
+
+        var request = new UpdateCategoryRequest
+        {
+            Name = "Laptops",
+            Slug = "laptops",
+            Description = "Laptop category",
+            Status = CategoryStatus.Active
+        };
+
+        _categoryRepoMock
+            .Setup(repo => repo.GetByIdAsync(categoryId))
+            .ReturnsAsync(category);
+
+        _categoryRepoMock
+            .Setup(repo => repo.IsSlugUniqueAsync(request.Slug, categoryId))
+            .ReturnsAsync(false);
+
+        // Act
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => _categoryService.UpdateAsync(categoryId, request));
+
+        // Assert
+        Assert.Equal($"Category slug '{request.Slug}' already exists.", exception.Message);
+
+        _categoryRepoMock.Verify(repo => repo.UpdateAsync(It.IsAny<Category>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_WhenCategoryExists_ShouldDeleteCategory()
+    {
+        // Arrange
+        var categoryId = Guid.NewGuid();
+
+        var category = new Category
+        {
+            Id = categoryId,
+            Name = "Laptops",
+            Slug = "laptops",
+            Description = "Laptop category",
+            Status = CategoryStatus.Active
+        };
+
+        _categoryRepoMock
+            .Setup(repo => repo.GetByIdAsync(categoryId))
+            .ReturnsAsync(category);
+
+        _categoryRepoMock
+            .Setup(repo => repo.DeleteAsync(It.IsAny<Category>()))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        await _categoryService.DeleteAsync(categoryId);
+
+        // Assert
+        _categoryRepoMock.Verify(repo => repo.DeleteAsync(category), Times.Once);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_WhenCategoryDoesNotExist_ShouldThrowKeyNotFoundException()
+    {
+        // Arrange
+        var categoryId = Guid.NewGuid();
+
+        _categoryRepoMock
+            .Setup(repo => repo.GetByIdAsync(categoryId))
+            .ReturnsAsync((Category?)null);
+
+        // Act
+        var exception = await Assert.ThrowsAsync<KeyNotFoundException>(
+            () => _categoryService.DeleteAsync(categoryId));
+
+        // Assert
+        Assert.Equal($"Category id '{categoryId}' not found.", exception.Message);
+
+        _categoryRepoMock.Verify(repo => repo.DeleteAsync(It.IsAny<Category>()), Times.Never);
+    }
+
+    [Fact]
+    public void MapToCategoryDetailDto_ShouldMapCategoryToCategoryDetailDto()
+    {
+        // Arrange
+        var category = new Category
+        {
+            Id = Guid.NewGuid(),
+            Name = "Laptops",
+            Slug = "laptops",
+            Description = "Laptop category",
+            Status = CategoryStatus.Active,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        // Act
+        var result = CategoryService.MapToCategoryDetailDto(category);
+
+        // Assert
+        Assert.Equal(category.Id, result.Id);
+        Assert.Equal(category.Name, result.Name);
+        Assert.Equal(category.Slug, result.Slug);
+        Assert.Equal(category.Description, result.Description);
+        Assert.Equal(category.Status, result.Status);
+        Assert.Equal(category.CreatedAt, result.CreatedAt);
+        Assert.Equal(category.UpdatedAt, result.UpdatedAt);
+    }
 }
