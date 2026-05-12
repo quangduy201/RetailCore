@@ -1,5 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using RetailCore.Repositories.Entities;
@@ -17,7 +18,7 @@ public class JwtTokenGenerator : IJwtTokenGenerator
         _jwtOptions = jwtOptions;
     }
 
-    public string GenerateToken(AppUser user, IList<string> roles)
+    public string GenerateAccessToken(AppUser user, IList<string> roles)
     {
         var claims = new List<Claim>
         {
@@ -35,9 +36,23 @@ public class JwtTokenGenerator : IJwtTokenGenerator
             issuer: _jwtOptions.Issuer,
             audience: _jwtOptions.Audience,
             claims: claims,
-            expires: DateTime.UtcNow.AddDays(_jwtOptions.ExpirationInSeconds),
+            expires: DateTime.UtcNow.AddSeconds(_jwtOptions.AccessTokenExpirationInSeconds),
             signingCredentials: credentials);
 
         return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    public RefreshToken GenerateRefreshToken()
+    {
+        var randomBytes = RandomNumberGenerator.GetBytes(64);
+
+        return new RefreshToken
+        {
+            Id = Guid.NewGuid(),
+            Token = Convert.ToBase64String(randomBytes),
+            CreatedAtUtc = DateTime.UtcNow,
+            ExpiresAtUtc = DateTime.UtcNow.AddSeconds(_jwtOptions.RefreshTokenExpirationInSeconds),
+            IsRevoked = false,
+        };
     }
 }

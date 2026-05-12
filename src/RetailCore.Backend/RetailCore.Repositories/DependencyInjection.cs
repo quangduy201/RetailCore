@@ -22,6 +22,7 @@ public static class DependencyInjection
         services.AddScoped<IProductAttributeValueRepository, ProductAttributeValueRepository>();
         services.AddScoped<IProductVariantImageRepository, ProductVariantImageRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 
         return services;
     }

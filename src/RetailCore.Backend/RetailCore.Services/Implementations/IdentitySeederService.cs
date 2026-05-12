@@ -52,7 +52,8 @@ public class IdentitySeederService : IIdentitySeederService
             {
                 Email = adminEmail,
                 UserName = adminEmail,
-                FullName = _adminOptions.FullName
+                FullName = _adminOptions.FullName,
+                AvatarUrl = _adminOptions.AvatarUrl,
             };
 
             var result = await _userManager.CreateAsync(adminUser, _adminOptions.Password);

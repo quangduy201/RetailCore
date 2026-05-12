@@ -21,7 +21,7 @@ export const sidebarConfig: SidebarItem[] = [
   {
     key: "dashboard",
     label: "Dashboard",
-    path: "/",
+    path: "/admin/dashboard",
     icon: LayoutDashboard,
   },
   {
@@ -33,19 +33,19 @@ export const sidebarConfig: SidebarItem[] = [
         key: "products",
         label: "Products",
         icon: ShoppingBag,
-        path: "/products",
+        path: "/admin/products",
       },
       {
         key: "categories",
         label: "Categories",
         icon: FolderTree,
-        path: "/categories",
+        path: "/admin/categories",
       },
       {
         key: "brands",
         label: "Brands",
         icon: Tag,
-        path: "/brands",
+        path: "/admin/brands",
       },
     ],
   },
@@ -53,12 +53,12 @@ export const sidebarConfig: SidebarItem[] = [
     key: "orders",
     label: "Orders",
     icon: ShoppingCart,
-    path: "/orders",
+    path: "/admin/orders",
   },
   {
     key: "customers",
     label: "Customers",
     icon: Users,
-    path: "/customers",
+    path: "/admin/customers",
   },
 ];

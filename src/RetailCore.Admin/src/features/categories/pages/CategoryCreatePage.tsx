@@ -42,7 +42,7 @@ export default function CategoryCreatePage() {
 
       await categoryApi.create(data);
       toast.success("Category created successfully");
-      navigate("/categories");
+      navigate("/admin/categories");
     } catch (error) {
       console.error("Failed to create category:", error);
       toast.error("Failed to create category. Please try again.");
@@ -56,7 +56,7 @@ export default function CategoryCreatePage() {
         <Button
           isIconOnly
           variant="outline"
-          onPress={() => navigate("/categories")}
+          onPress={() => navigate("/admin/categories")}
         >
           <ChevronLeft className="size-5" />
         </Button>
@@ -135,7 +135,7 @@ export default function CategoryCreatePage() {
             <div className="flex gap-3 border-t border-default-200 pt-6">
               <Button
                 variant="secondary"
-                onPress={() => navigate("/categories")}
+                onPress={() => navigate("/admin/categories")}
                 className="flex-1"
               >
                 Cancel

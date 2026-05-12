@@ -29,7 +29,6 @@ import { productApi } from "@/features/products/api/product.api";
 import type {
   CreateProductAttributeRequest,
   CreateProductAttributeValueRequest,
-  CreateProductRequest,
   ProductDetailDto,
 } from "@/features/products/types/types";
 import type { UUID } from "@/shared/types/common";

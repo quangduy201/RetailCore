@@ -5,5 +5,6 @@ public class JwtOptions
     public string SecretKey { get; set; } = default!;
     public string Issuer { get; set; } = default!;
     public string Audience { get; set; } = default!;
-    public int ExpirationInSeconds { get; set; }
+    public int AccessTokenExpirationInSeconds { get; set; }
+    public int RefreshTokenExpirationInSeconds { get; set; }
 }

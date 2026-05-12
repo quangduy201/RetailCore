@@ -4,5 +4,6 @@ namespace RetailCore.Services.Interfaces;
 
 public interface IJwtTokenGenerator
 {
-    string GenerateToken(AppUser user, IList<string> roles);
+    string GenerateAccessToken(AppUser user, IList<string> roles);
+    RefreshToken GenerateRefreshToken();
 }

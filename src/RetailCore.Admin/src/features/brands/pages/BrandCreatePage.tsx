@@ -56,7 +56,7 @@ export default function BrandCreatePage() {
         <Button
           isIconOnly
           variant="outline"
-          onPress={() => navigate("/brands")}
+          onPress={() => navigate("/admin/brands")}
         >
           <ChevronLeft className="size-5" />
         </Button>
@@ -132,7 +132,7 @@ export default function BrandCreatePage() {
             <div className="flex gap-3 border-t border-default-200 pt-6">
               <Button
                 variant="secondary"
-                onPress={() => navigate("/brands")}
+                onPress={() => navigate("/admin/brands")}
                 className="flex-1"
               >
                 Cancel

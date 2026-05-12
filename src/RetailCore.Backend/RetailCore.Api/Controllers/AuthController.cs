@@ -31,18 +31,44 @@ public class AuthController : ControllerBase
         return Ok(result);
     }
 
+    [HttpPost("refresh")]
+    public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest request)
+    {
+        var result = await _authService.RefreshTokenAsync(request);
+        return Ok(result);
+    }
+
+    [Authorize]
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout([FromBody] LogoutRequest request)
+    {
+        await _authService.LogoutAsync(request);
+        return NoContent();
+    }
+
+    [Authorize]
+    [HttpPost("logout-all")]
+    public async Task<IActionResult> LogoutAll()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrWhiteSpace(userId))
+            return Unauthorized();
+
+        await _authService.LogoutAllAsync(Guid.Parse(userId));
+        return NoContent();
+    }
+
     [Authorize]
     [HttpGet("me")]
     public async Task<IActionResult> Me()
     {
-        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-        if (string.IsNullOrWhiteSpace(userIdClaim))
-        {
+        if (string.IsNullOrWhiteSpace(userId))
             return Unauthorized();
-        }
 
-        var result = await _authService.GetCurrentUserAsync(Guid.Parse(userIdClaim));
+        var result = await _authService.GetCurrentUserAsync(Guid.Parse(userId));
         return Ok(result);
     }
 }

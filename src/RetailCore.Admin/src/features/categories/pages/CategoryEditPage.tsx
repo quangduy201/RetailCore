@@ -54,7 +54,7 @@ export default function CategoryEditPage() {
     const loadCategory = async () => {
       if (!id) {
         toast.error("Invalid category ID");
-        navigate("/categories");
+        navigate("/admin/categories");
         return;
       }
 
@@ -70,7 +70,7 @@ export default function CategoryEditPage() {
       } catch (error) {
         console.error("Failed to load category:", error);
         toast.error("Failed to load category details");
-        navigate("/categories");
+        navigate("/admin/categories");
       } finally {
         setIsLoading(false);
       }
@@ -95,7 +95,7 @@ export default function CategoryEditPage() {
 
       await categoryApi.update(category.id, data);
       toast.success("Category updated successfully");
-      navigate("/categories");
+      navigate("/admin/categories");
     } catch (error) {
       console.error("Failed to update category:", error);
       toast.error("Failed to update category. Please try again.");
@@ -127,7 +127,7 @@ export default function CategoryEditPage() {
         <Button
           isIconOnly
           variant="outline"
-          onPress={() => navigate("/categories")}
+          onPress={() => navigate("/admin/categories")}
         >
           <ChevronLeft className="size-5" />
         </Button>
@@ -235,7 +235,7 @@ export default function CategoryEditPage() {
             <div className="flex gap-3 border-t border-default-200 pt-6">
               <Button
                 variant="secondary"
-                onPress={() => navigate("/categories")}
+                onPress={() => navigate("/admin/categories")}
                 className="flex-1"
               >
                 Cancel

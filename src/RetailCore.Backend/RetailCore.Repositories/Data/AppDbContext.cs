@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using RetailCore.Repositories.Entities;
@@ -9,6 +8,7 @@ public class AppDbContext : IdentityDbContext<AppUser, AppRole, Guid, AppUserCla
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<Brand> Brands => Set<Brand>();
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<Product> Products => Set<Product>();

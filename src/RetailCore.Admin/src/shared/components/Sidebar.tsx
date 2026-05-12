@@ -1,7 +1,8 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { sidebarConfig } from "../../config/sidebarConfig";
 import { ChevronDown } from "lucide-react";
-import { Accordion, Avatar } from "@heroui/react";
+import { Accordion, Avatar, Dropdown, Label, Separator } from "@heroui/react";
+import { useAuth, useLogout } from "@/features/auth/hooks/useAuth";
 
 interface SidebarProps {
   collapsed: boolean;
@@ -11,8 +12,15 @@ export default function Sidebar({ collapsed }: Readonly<SidebarProps>) {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const { user } = useAuth();
+  const { logout } = useLogout();
+
   const isActive = (path: string | undefined) =>
     path && location.pathname.startsWith(path);
+
+  const handleLogout = async () => {
+    logout();
+  };
 
   return (
     <div
@@ -102,24 +110,45 @@ export default function Sidebar({ collapsed }: Readonly<SidebarProps>) {
 
       {/* Bottom section (fixed) */}
       <div className="border-t border-zinc-800 p-2">
-        <button className="flex items-center gap-3 w-full px-3 py-2 rounded-md hover:bg-zinc-800 transition">
-          <div className="relative">
-            <Avatar size="md">
-              <Avatar.Image src="https://0.gravatar.com/avatar/acec1add229b2a6d5a23d122e0e1e6450fb773b06dc83c3bcd7ed4456842facc?size=256&d=initials" />
-            </Avatar>
+        <Dropdown>
+          <Dropdown.Trigger className="flex items-center gap-3 w-full px-3 py-2 rounded-md hover:bg-zinc-800 transition">
+            <div className="relative">
+              <Avatar size="md">
+                <Avatar.Image src={user?.avatarUrl} />
+                <Avatar.Fallback className="border-none bg-linear-to-br from-blue-600 to-green-600 text-white">
+                  {user?.fullName.split(" ").map((name) => name.at(0))}
+                </Avatar.Fallback>
+              </Avatar>
 
-            <span className="absolute bottom-0 right-0 w-2 h-2 bg-green-500 rounded-full ring-2 ring-zinc-900" />
-          </div>
-
-          {!collapsed && (
-            <div className="flex flex-col text-left min-w-0">
-              <span className="text-sm font-medium truncate">Admin User</span>
-              <span className="text-xs text-zinc-400 truncate">
-                admin@email.com
-              </span>
+              <span className="absolute bottom-0 right-0 w-2 h-2 bg-green-500 rounded-full ring-2 ring-zinc-900" />
             </div>
-          )}
-        </button>
+
+            {!collapsed && (
+              <div className="flex flex-col text-left min-w-0">
+                <span className="text-sm font-medium truncate">
+                  {user?.fullName}
+                </span>
+                <span className="text-xs text-zinc-400 truncate">
+                  {user?.email}
+                </span>
+              </div>
+            )}
+          </Dropdown.Trigger>
+          <Dropdown.Popover>
+            <Dropdown.Menu>
+              <Dropdown.Item onPress={() => navigate("/admin/profile")}>
+                <Label>My Profile</Label>
+              </Dropdown.Item>
+              <Dropdown.Item onPress={() => navigate("/admin/settings")}>
+                <Label>Settings</Label>
+              </Dropdown.Item>
+              <Separator />
+              <Dropdown.Item variant="danger" onPress={handleLogout}>
+                <Label>Logout</Label>
+              </Dropdown.Item>
+            </Dropdown.Menu>
+          </Dropdown.Popover>
+        </Dropdown>
       </div>
     </div>
   );
