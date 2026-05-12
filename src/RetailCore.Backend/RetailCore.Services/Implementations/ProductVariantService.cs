@@ -50,6 +50,7 @@ public class ProductVariantService : IProductVariantService
 
         var variant = new ProductVariant
         {
+            Id = Guid.NewGuid(),
             ProductId = productId,
             Sku = request.Sku,
             Name = request.Name,

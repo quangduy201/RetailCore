@@ -1,5 +1,6 @@
 using RetailCore.Repositories.Repositories.Interfaces;
 using RetailCore.Services.Interfaces;
+using RetailCore.Services.Options;
 using RetailCore.Shared.DTOs.User;
 
 namespace RetailCore.Services.Implementations;
@@ -7,11 +8,16 @@ namespace RetailCore.Services.Implementations;
 public class UserService : IUserService
 {
     private readonly IUserRepository _userRepository;
+    private readonly AdminOptions _adminOptions;
     private readonly IUnitOfWork _unitOfWork;
 
-    public UserService(IUserRepository userRepository, IUnitOfWork unitOfWork)
+    public UserService(
+        IUserRepository userRepository,
+        AdminOptions adminOptions,
+        IUnitOfWork unitOfWork)
     {
         _userRepository = userRepository;
+        _adminOptions = adminOptions;
         _unitOfWork = unitOfWork;
     }
 
@@ -57,6 +63,11 @@ public class UserService : IUserService
         if (user == null)
         {
             throw new KeyNotFoundException("User not found.");
+        }
+
+        if (string.Equals(user.Email, _adminOptions.Email, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("Default admin account cannot be deactivated.");
         }
 
         user.IsActive = !user.IsActive;
