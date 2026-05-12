@@ -1,7 +1,3 @@
-using Moq;
-using RetailCore.Repositories.Entities;
-using RetailCore.Repositories.Repositories.Interfaces;
-using RetailCore.Services.Implementations;
 using RetailCore.Shared.Enums;
 using RetailCore.Shared.Requests.Brand;
 
@@ -9,339 +5,586 @@ namespace RetailCore.UnitTests.Services;
 
 public class BrandServiceTests
 {
-    private readonly Mock<IBrandRepository> _mockRepo;
-    private readonly BrandService _service;
+    private readonly Mock<IBrandRepository> _brandRepoMock;
+    private readonly BrandService _brandService;
 
     public BrandServiceTests()
     {
-        _mockRepo = new Mock<IBrandRepository>();
-        _service = new BrandService(_mockRepo.Object);
+        _brandRepoMock = new Mock<IBrandRepository>();
+        _brandService = new BrandService(_brandRepoMock.Object);
     }
 
-    #region GetPagedAsync Tests
-
     [Fact]
-    public async Task GetPagedAsync_WithValidRequest_ReturnsPagedResult()
+    public async Task GetPagedAsync_ShouldReturnPagedBrandSummaryDtos()
     {
         // Arrange
-        var request = new GetBrandsRequest { PageNumber = 1, PageSize = 10 };
-        var brands = new List<Brand>
+        var request = new GetBrandsRequest
         {
-            new() { Id = Guid.NewGuid(), Name = "Brand 1", Slug = "brand-1", Status = BrandStatus.Active },
-            new() { Id = Guid.NewGuid(), Name = "Brand 2", Slug = "brand-2", Status = BrandStatus.Active }
+            Keyword = "apple",
+            Status = BrandStatus.Active,
+            PageNumber = 1,
+            PageSize = 10
         };
 
-        _mockRepo.Setup(r => r.GetPagedAsync(It.IsAny<string>(), It.IsAny<BrandStatus?>(), It.IsAny<int>(), It.IsAny<int>()))
-            .ReturnsAsync((brands, 2));
-
-        // Act
-        var result = await _service.GetPagedAsync(request);
-
-        // Assert
-        Assert.NotNull(result);
-        Assert.Equal(2, result.Items.Count());
-        Assert.Equal(2, result.TotalCount);
-        Assert.Equal(1, result.PageNumber);
-        Assert.Equal(10, result.PageSize);
-    }
-
-    [Fact]
-    public async Task GetPagedAsync_WithEmptyResult_ReturnsEmptyCollection()
-    {
-        // Arrange
-        var request = new GetBrandsRequest { PageNumber = 1, PageSize = 10 };
-        _mockRepo.Setup(r => r.GetPagedAsync(It.IsAny<string>(), It.IsAny<BrandStatus?>(), It.IsAny<int>(), It.IsAny<int>()))
-            .ReturnsAsync((new List<Brand>(), 0));
-
-        // Act
-        var result = await _service.GetPagedAsync(request);
-
-        // Assert
-        Assert.Empty(result.Items);
-        Assert.Equal(0, result.TotalCount);
-    }
-
-    #endregion
-
-    #region GetPagedForManagementAsync Tests
-
-    [Fact]
-    public async Task GetPagedForManagementAsync_WithValidRequest_ReturnsPagedDetailResult()
-    {
-        // Arrange
-        var request = new GetBrandsRequest { PageNumber = 1, PageSize = 10 };
         var brands = new List<Brand>
         {
-            new() { Id = Guid.NewGuid(), Name = "Brand 1", Slug = "brand-1", Description = "Desc 1", Status = BrandStatus.Active, CreatedAt = DateTime.UtcNow }
+            new()
+            {
+                Id = Guid.NewGuid(),
+                Name = "Apple",
+                Slug = "apple",
+                Description = "Apple products",
+                Status = BrandStatus.Active
+            },
+            new()
+            {
+                Id = Guid.NewGuid(),
+                Name = "Apple Accessories",
+                Slug = "apple-accessories",
+                Description = "Accessories",
+                Status = BrandStatus.Active
+            }
         };
 
-        _mockRepo.Setup(r => r.GetPagedAsync(It.IsAny<string>(), It.IsAny<BrandStatus?>(), It.IsAny<int>(), It.IsAny<int>()))
-            .ReturnsAsync((brands, 1));
+        _brandRepoMock
+            .Setup(repo => repo.GetPagedAsync(
+                request.Keyword,
+                request.Status,
+                request.PageNumber,
+                request.PageSize))
+            .ReturnsAsync((brands, brands.Count));
 
         // Act
-        var result = await _service.GetPagedForManagementAsync(request);
+        var result = await _brandService.GetPagedAsync(request);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Single(result.Items);
-        Assert.Equal("Brand 1", result.Items.First().Name);
+        Assert.Equal(request.PageNumber, result.PageNumber);
+        Assert.Equal(request.PageSize, result.PageSize);
+        Assert.Equal(brands.Count, result.TotalCount);
+
+        var items = result.Items.ToList();
+
+        Assert.Equal(2, items.Count);
+        Assert.Equal(brands[0].Id, items[0].Id);
+        Assert.Equal("Apple", items[0].Name);
+        Assert.Equal("apple", items[0].Slug);
+
+        Assert.Equal(brands[1].Id, items[1].Id);
+        Assert.Equal("Apple Accessories", items[1].Name);
+        Assert.Equal("apple-accessories", items[1].Slug);
     }
 
-    #endregion
-
-    #region GetByIdAsync Tests
-
     [Fact]
-    public async Task GetByIdAsync_WithValidId_ReturnsBrand()
+    public async Task GetPagedForManagementAsync_ShouldReturnPagedBrandDetailDtos()
     {
         // Arrange
-        var id = Guid.NewGuid();
-        var brand = new Brand { Id = id, Name = "Test Brand", Slug = "test-brand", Status = BrandStatus.Active };
+        var request = new GetBrandsRequest
+        {
+            Keyword = null,
+            Status = BrandStatus.Active,
+            PageNumber = 1,
+            PageSize = 10
+        };
 
-        _mockRepo.Setup(r => r.GetByIdAsync(id))
+        var createdAt = DateTime.UtcNow;
+
+        var brands = new List<Brand>
+        {
+            new()
+            {
+                Id = Guid.NewGuid(),
+                Name = "Samsung",
+                Slug = "samsung",
+                Description = "Samsung products",
+                Status = BrandStatus.Active,
+                CreatedAt = createdAt
+            }
+        };
+
+        _brandRepoMock
+            .Setup(repo => repo.GetPagedAsync(
+                request.Keyword,
+                request.Status,
+                request.PageNumber,
+                request.PageSize))
+            .ReturnsAsync((brands, brands.Count));
+
+        // Act
+        var result = await _brandService.GetPagedForManagementAsync(request);
+
+        // Assert
+        Assert.Equal(request.PageNumber, result.PageNumber);
+        Assert.Equal(request.PageSize, result.PageSize);
+        Assert.Equal(brands.Count, result.TotalCount);
+
+        var item = Assert.Single(result.Items);
+
+        Assert.Equal(brands[0].Id, item.Id);
+        Assert.Equal("Samsung", item.Name);
+        Assert.Equal("samsung", item.Slug);
+        Assert.Equal("Samsung products", item.Description);
+        Assert.Equal(BrandStatus.Active, item.Status);
+        Assert.Equal(createdAt, item.CreatedAt);
+    }
+
+    [Fact]
+    public async Task GetByIdAsync_WhenBrandExists_ShouldReturnBrandDetailDto()
+    {
+        // Arrange
+        var brandId = Guid.NewGuid();
+
+        var brand = new Brand
+        {
+            Id = brandId,
+            Name = "Apple",
+            Slug = "apple",
+            Description = "Apple products",
+            Status = BrandStatus.Active,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _brandRepoMock
+            .Setup(repo => repo.GetByIdAsync(brandId))
             .ReturnsAsync(brand);
 
         // Act
-        var result = await _service.GetByIdAsync(id);
+        var result = await _brandService.GetByIdAsync(brandId);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal(id, result.Id);
-        Assert.Equal("Test Brand", result.Name);
+        Assert.Equal(brand.Id, result.Id);
+        Assert.Equal(brand.Name, result.Name);
+        Assert.Equal(brand.Slug, result.Slug);
+        Assert.Equal(brand.Description, result.Description);
+        Assert.Equal(brand.Status, result.Status);
+        Assert.Equal(brand.CreatedAt, result.CreatedAt);
     }
 
     [Fact]
-    public async Task GetByIdAsync_WithInvalidId_ThrowsKeyNotFoundException()
+    public async Task GetByIdAsync_WhenBrandDoesNotExist_ShouldThrowKeyNotFoundException()
     {
         // Arrange
-        var id = Guid.NewGuid();
-        _mockRepo.Setup(r => r.GetByIdAsync(id))
+        var brandId = Guid.NewGuid();
+
+        _brandRepoMock
+            .Setup(repo => repo.GetByIdAsync(brandId))
             .ReturnsAsync((Brand?)null);
 
-        // Act & Assert
-        await Assert.ThrowsAsync<KeyNotFoundException>(() => _service.GetByIdAsync(id));
+        // Act
+        var exception = await Assert.ThrowsAsync<KeyNotFoundException>(() =>
+        {
+            return _brandService.GetByIdAsync(brandId);
+        });
+
+        // Assert
+        Assert.Equal($"Brand id '{brandId}' not found.", exception.Message);
     }
 
-    #endregion
-
-    #region GetBySlugAsync Tests
-
     [Fact]
-    public async Task GetBySlugAsync_WithValidSlug_ReturnsBrand()
+    public async Task GetBySlugAsync_WhenBrandExists_ShouldReturnBrandDetailDto()
     {
         // Arrange
-        const string slug = "test-brand";
-        var brand = new Brand { Id = Guid.NewGuid(), Name = "Test Brand", Slug = slug, Status = BrandStatus.Active };
+        var slug = "apple";
 
-        _mockRepo.Setup(r => r.GetBySlugAsync(slug))
+        var brand = new Brand
+        {
+            Id = Guid.NewGuid(),
+            Name = "Apple",
+            Slug = slug,
+            Description = "Apple products",
+            Status = BrandStatus.Active,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _brandRepoMock
+            .Setup(repo => repo.GetBySlugAsync(slug))
             .ReturnsAsync(brand);
 
         // Act
-        var result = await _service.GetBySlugAsync(slug);
+        var result = await _brandService.GetBySlugAsync(slug);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal(slug, result.Slug);
+        Assert.Equal(brand.Id, result.Id);
+        Assert.Equal(brand.Name, result.Name);
+        Assert.Equal(brand.Slug, result.Slug);
+        Assert.Equal(brand.Description, result.Description);
+        Assert.Equal(brand.Status, result.Status);
     }
 
     [Fact]
-    public async Task GetBySlugAsync_WithInvalidSlug_ThrowsKeyNotFoundException()
+    public async Task GetBySlugAsync_WhenBrandDoesNotExist_ShouldThrowKeyNotFoundException()
     {
         // Arrange
-        const string slug = "invalid-slug";
-        _mockRepo.Setup(r => r.GetBySlugAsync(slug))
+        var slug = "unknown-brand";
+
+        _brandRepoMock
+            .Setup(repo => repo.GetBySlugAsync(slug))
             .ReturnsAsync((Brand?)null);
 
-        // Act & Assert
-        await Assert.ThrowsAsync<KeyNotFoundException>(() => _service.GetBySlugAsync(slug));
+        // Act
+        var exception = await Assert.ThrowsAsync<KeyNotFoundException>(
+            () => _brandService.GetBySlugAsync(slug));
+
+        // Assert
+        Assert.Equal($"Brand slug '{slug}' not found.", exception.Message);
     }
 
-    #endregion
-
-    #region CreateAsync Tests
-
     [Fact]
-    public async Task CreateAsync_WithValidRequest_ReturnsBrandId()
+    public async Task CreateAsync_WhenSlugIsUnique_ShouldCreateBrandAndReturnId()
     {
         // Arrange
-        var request = new CreateBrandRequest { Name = "New Brand", Slug = "new-brand", Description = "Test" };
+        var request = new CreateBrandRequest
+        {
+            Name = "Sony",
+            Slug = "sony",
+            Description = "Sony products"
+        };
 
-        _mockRepo.Setup(r => r.IsSlugUniqueAsync(request.Slug))
+        Brand? createdBrand = null;
+
+        _brandRepoMock
+            .Setup(repo => repo.IsSlugUniqueAsync(request.Slug, null))
             .ReturnsAsync(true);
-        _mockRepo.Setup(r => r.AddAsync(It.IsAny<Brand>()))
+
+        _brandRepoMock
+            .Setup(repo => repo.AddAsync(It.IsAny<Brand>()))
+            .Callback<Brand>(brand => createdBrand = brand)
             .Returns(Task.CompletedTask);
 
         // Act
-        var result = await _service.CreateAsync(request);
+        var result = await _brandService.CreateAsync(request);
 
         // Assert
         Assert.NotEqual(Guid.Empty, result);
-        _mockRepo.Verify(r => r.AddAsync(It.IsAny<Brand>()), Times.Once);
+        Assert.NotNull(createdBrand);
+
+        Assert.Equal(result, createdBrand!.Id);
+        Assert.Equal(request.Name, createdBrand.Name);
+        Assert.Equal(request.Slug, createdBrand.Slug);
+        Assert.Equal(request.Description, createdBrand.Description);
+        Assert.Equal(BrandStatus.Active, createdBrand.Status);
+        Assert.NotEqual(default, createdBrand.CreatedAt);
+
+        _brandRepoMock.Verify(repo => repo.AddAsync(It.IsAny<Brand>()), Times.Once);
     }
 
     [Fact]
-    public async Task CreateAsync_WithDuplicateSlug_ThrowsInvalidOperationException()
+    public async Task CreateAsync_WhenSlugAlreadyExists_ShouldThrowInvalidOperationException()
     {
         // Arrange
-        var request = new CreateBrandRequest { Name = "New Brand", Slug = "existing-slug" };
+        var request = new CreateBrandRequest
+        {
+            Name = "Apple",
+            Slug = "apple",
+            Description = "Duplicate brand"
+        };
 
-        _mockRepo.Setup(r => r.IsSlugUniqueAsync(request.Slug))
+        _brandRepoMock
+            .Setup(repo => repo.IsSlugUniqueAsync(request.Slug, null))
             .ReturnsAsync(false);
 
-        // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(() => _service.CreateAsync(request));
-        _mockRepo.Verify(r => r.AddAsync(It.IsAny<Brand>()), Times.Never);
+        // Act
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => _brandService.CreateAsync(request));
+
+        // Assert
+        Assert.Equal($"Brand slug '{request.Slug}' already exists.", exception.Message);
+
+        _brandRepoMock.Verify(repo => repo.AddAsync(It.IsAny<Brand>()), Times.Never);
     }
 
     [Fact]
-    public async Task CreateAsync_CreatedBrandHasActiveStatus()
+    public async Task UpdateAsync_WhenBrandExistsAndSlugUnchanged_ShouldUpdateBrand()
     {
         // Arrange
-        var request = new CreateBrandRequest { Name = "New Brand", Slug = "new-brand" };
-        Brand? capturedBrand = null;
+        var brandId = Guid.NewGuid();
 
-        _mockRepo.Setup(r => r.IsSlugUniqueAsync(request.Slug))
-            .ReturnsAsync(true);
-        _mockRepo.Setup(r => r.AddAsync(It.IsAny<Brand>()))
-            .Callback<Brand>(b => capturedBrand = b)
+        var brand = new Brand
+        {
+            Id = brandId,
+            Name = "Old Name",
+            Slug = "apple",
+            Description = "Old description",
+            Status = BrandStatus.Active,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        var request = new UpdateBrandRequest
+        {
+            Name = "Apple",
+            Slug = "apple",
+            Description = "Updated description",
+            Status = BrandStatus.Inactive
+        };
+
+        _brandRepoMock
+            .Setup(repo => repo.GetByIdAsync(brandId))
+            .ReturnsAsync(brand);
+
+        _brandRepoMock
+            .Setup(repo => repo.UpdateAsync(It.IsAny<Brand>()))
             .Returns(Task.CompletedTask);
 
         // Act
-        await _service.CreateAsync(request);
+        await _brandService.UpdateAsync(brandId, request);
 
         // Assert
-        Assert.NotNull(capturedBrand);
-        Assert.Equal(BrandStatus.Active, capturedBrand.Status);
+        Assert.Equal(request.Name, brand.Name);
+        Assert.Equal(request.Slug, brand.Slug);
+        Assert.Equal(request.Description, brand.Description);
+        Assert.Equal(request.Status, brand.Status);
+        Assert.NotNull(brand.UpdatedAt);
+
+        _brandRepoMock.Verify(repo => repo.IsSlugUniqueAsync(It.IsAny<string>(), It.IsAny<Guid?>()), Times.Never);
+        _brandRepoMock.Verify(repo => repo.UpdateAsync(brand), Times.Once);
     }
 
-    #endregion
-
-    #region UpdateAsync Tests
-
     [Fact]
-    public async Task UpdateAsync_WithValidRequest_UpdatesBrand()
+    public async Task UpdateAsync_WhenBrandExistsAndSlugChangedToUniqueSlug_ShouldUpdateBrand()
     {
         // Arrange
-        var id = Guid.NewGuid();
-        var existingBrand = new Brand { Id = id, Name = "Old", Slug = "old-slug", Status = BrandStatus.Active };
-        var request = new UpdateBrandRequest { Name = "Updated", Slug = "updated-slug", Status = BrandStatus.Inactive };
+        var brandId = Guid.NewGuid();
 
-        _mockRepo.Setup(r => r.GetByIdAsync(id))
-            .ReturnsAsync(existingBrand);
-        _mockRepo.Setup(r => r.IsSlugUniqueAsync(request.Slug, id))
+        var brand = new Brand
+        {
+            Id = brandId,
+            Name = "Old Name",
+            Slug = "old-slug",
+            Description = "Old description",
+            Status = BrandStatus.Active,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        var request = new UpdateBrandRequest
+        {
+            Name = "New Name",
+            Slug = "new-slug",
+            Description = "New description",
+            Status = BrandStatus.Active
+        };
+
+        _brandRepoMock
+            .Setup(repo => repo.GetByIdAsync(brandId))
+            .ReturnsAsync(brand);
+
+        _brandRepoMock
+            .Setup(repo => repo.IsSlugUniqueAsync(request.Slug, brandId))
             .ReturnsAsync(true);
-        _mockRepo.Setup(r => r.UpdateAsync(It.IsAny<Brand>()))
+
+        _brandRepoMock
+            .Setup(repo => repo.UpdateAsync(It.IsAny<Brand>()))
             .Returns(Task.CompletedTask);
 
         // Act
-        await _service.UpdateAsync(id, request);
+        await _brandService.UpdateAsync(brandId, request);
 
         // Assert
-        _mockRepo.Verify(r => r.UpdateAsync(It.IsAny<Brand>()), Times.Once);
-        Assert.Equal("Updated", existingBrand.Name);
+        Assert.Equal(request.Name, brand.Name);
+        Assert.Equal(request.Slug, brand.Slug);
+        Assert.Equal(request.Description, brand.Description);
+        Assert.Equal(request.Status, brand.Status);
+        Assert.NotNull(brand.UpdatedAt);
+
+        _brandRepoMock.Verify(repo => repo.IsSlugUniqueAsync(request.Slug, brandId), Times.Once);
+        _brandRepoMock.Verify(repo => repo.UpdateAsync(brand), Times.Once);
     }
 
     [Fact]
-    public async Task UpdateAsync_WithInvalidId_ThrowsKeyNotFoundException()
+    public async Task UpdateAsync_WhenBrandDoesNotExist_ShouldThrowKeyNotFoundException()
     {
         // Arrange
-        var id = Guid.NewGuid();
-        var request = new UpdateBrandRequest { Name = "Test", Slug = "test" };
+        var brandId = Guid.NewGuid();
 
-        _mockRepo.Setup(r => r.GetByIdAsync(id))
+        var request = new UpdateBrandRequest
+        {
+            Name = "Apple",
+            Slug = "apple",
+            Description = "Apple products",
+            Status = BrandStatus.Active
+        };
+
+        _brandRepoMock
+            .Setup(repo => repo.GetByIdAsync(brandId))
             .ReturnsAsync((Brand?)null);
 
-        // Act & Assert
-        await Assert.ThrowsAsync<KeyNotFoundException>(() => _service.UpdateAsync(id, request));
+        // Act
+        var exception = await Assert.ThrowsAsync<KeyNotFoundException>(
+            () => _brandService.UpdateAsync(brandId, request));
+
+        // Assert
+        Assert.Equal($"Brand id '{brandId}' not found.", exception.Message);
+
+        _brandRepoMock.Verify(repo => repo.UpdateAsync(It.IsAny<Brand>()), Times.Never);
     }
 
     [Fact]
-    public async Task UpdateAsync_WithDuplicateSlug_ThrowsInvalidOperationException()
+    public async Task UpdateAsync_WhenSlugChangedToExistingSlug_ShouldThrowInvalidOperationException()
     {
         // Arrange
-        var id = Guid.NewGuid();
-        var existingBrand = new Brand { Id = id, Name = "Old", Slug = "old-slug" };
-        var request = new UpdateBrandRequest { Name = "Test", Slug = "new-slug" };
+        var brandId = Guid.NewGuid();
 
-        _mockRepo.Setup(r => r.GetByIdAsync(id))
-            .ReturnsAsync(existingBrand);
-        _mockRepo.Setup(r => r.IsSlugUniqueAsync(request.Slug, id))
+        var brand = new Brand
+        {
+            Id = brandId,
+            Name = "Old Brand",
+            Slug = "old-brand",
+            Description = "Old description",
+            Status = BrandStatus.Active
+        };
+
+        var request = new UpdateBrandRequest
+        {
+            Name = "Apple",
+            Slug = "apple",
+            Description = "Apple products",
+            Status = BrandStatus.Active
+        };
+
+        _brandRepoMock
+            .Setup(repo => repo.GetByIdAsync(brandId))
+            .ReturnsAsync(brand);
+
+        _brandRepoMock
+            .Setup(repo => repo.IsSlugUniqueAsync(request.Slug, brandId))
             .ReturnsAsync(false);
 
-        // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(() => _service.UpdateAsync(id, request));
+        // Act
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => _brandService.UpdateAsync(brandId, request));
+
+        // Assert
+        Assert.Equal($"Brand slug '{request.Slug}' already exists.", exception.Message);
+
+        _brandRepoMock.Verify(repo => repo.UpdateAsync(It.IsAny<Brand>()), Times.Never);
     }
 
-    #endregion
-
-    #region UpdateBrandStatusAsync Tests
-
     [Fact]
-    public async Task UpdateBrandStatusAsync_WithValidId_UpdatesStatus()
+    public async Task UpdateBrandStatusAsync_WhenBrandExists_ShouldUpdateStatus()
     {
         // Arrange
-        var id = Guid.NewGuid();
-        var brand = new Brand { Id = id, Name = "Test", Status = BrandStatus.Active };
+        var brandId = Guid.NewGuid();
 
-        _mockRepo.Setup(r => r.GetByIdAsync(id))
+        var brand = new Brand
+        {
+            Id = brandId,
+            Name = "Apple",
+            Slug = "apple",
+            Description = "Apple products",
+            Status = BrandStatus.Active
+        };
+
+        _brandRepoMock
+            .Setup(repo => repo.GetByIdAsync(brandId))
             .ReturnsAsync(brand);
-        _mockRepo.Setup(r => r.UpdateAsync(It.IsAny<Brand>()))
+
+        _brandRepoMock
+            .Setup(repo => repo.UpdateAsync(It.IsAny<Brand>()))
             .Returns(Task.CompletedTask);
 
         // Act
-        await _service.UpdateBrandStatusAsync(id, BrandStatus.Inactive);
+        await _brandService.UpdateBrandStatusAsync(brandId, BrandStatus.Inactive);
 
         // Assert
         Assert.Equal(BrandStatus.Inactive, brand.Status);
-        _mockRepo.Verify(r => r.UpdateAsync(It.IsAny<Brand>()), Times.Once);
+        Assert.NotNull(brand.UpdatedAt);
+
+        _brandRepoMock.Verify(repo => repo.UpdateAsync(brand), Times.Once);
     }
 
     [Fact]
-    public async Task UpdateBrandStatusAsync_WithInvalidId_ThrowsKeyNotFoundException()
+    public async Task UpdateBrandStatusAsync_WhenBrandDoesNotExist_ShouldThrowKeyNotFoundException()
     {
         // Arrange
-        var id = Guid.NewGuid();
-        _mockRepo.Setup(r => r.GetByIdAsync(id))
+        var brandId = Guid.NewGuid();
+
+        _brandRepoMock
+            .Setup(repo => repo.GetByIdAsync(brandId))
             .ReturnsAsync((Brand?)null);
 
-        // Act & Assert
-        await Assert.ThrowsAsync<KeyNotFoundException>(() => _service.UpdateBrandStatusAsync(id, BrandStatus.Active));
+        // Act
+        var exception = await Assert.ThrowsAsync<KeyNotFoundException>(
+            () => _brandService.UpdateBrandStatusAsync(brandId, BrandStatus.Inactive));
+
+        // Assert
+        Assert.Equal($"Brand id '{brandId}' not found.", exception.Message);
+
+        _brandRepoMock.Verify(repo => repo.UpdateAsync(It.IsAny<Brand>()), Times.Never);
     }
 
-    #endregion
-
-    #region DeleteAsync Tests
-
     [Fact]
-    public async Task DeleteAsync_WithValidId_DeletesBrand()
+    public async Task DeleteAsync_WhenBrandExists_ShouldDeleteBrand()
     {
         // Arrange
-        var id = Guid.NewGuid();
-        var brand = new Brand { Id = id, Name = "Test" };
+        var brandId = Guid.NewGuid();
 
-        _mockRepo.Setup(r => r.GetByIdAsync(id))
+        var brand = new Brand
+        {
+            Id = brandId,
+            Name = "Apple",
+            Slug = "apple",
+            Description = "Apple products",
+            Status = BrandStatus.Active
+        };
+
+        _brandRepoMock
+            .Setup(repo => repo.GetByIdAsync(brandId))
             .ReturnsAsync(brand);
-        _mockRepo.Setup(r => r.DeleteAsync(It.IsAny<Brand>()))
+
+        _brandRepoMock
+            .Setup(repo => repo.DeleteAsync(It.IsAny<Brand>()))
             .Returns(Task.CompletedTask);
 
         // Act
-        await _service.DeleteAsync(id);
+        await _brandService.DeleteAsync(brandId);
 
         // Assert
-        _mockRepo.Verify(r => r.DeleteAsync(It.IsAny<Brand>()), Times.Once);
+        _brandRepoMock.Verify(repo => repo.DeleteAsync(brand), Times.Once);
     }
 
     [Fact]
-    public async Task DeleteAsync_WithInvalidId_ThrowsException()
+    public async Task DeleteAsync_WhenBrandDoesNotExist_ShouldThrowKeyNotFoundException()
     {
         // Arrange
-        var id = Guid.NewGuid();
-        _mockRepo.Setup(r => r.GetByIdAsync(id))
+        var brandId = Guid.NewGuid();
+
+        _brandRepoMock
+            .Setup(repo => repo.GetByIdAsync(brandId))
             .ReturnsAsync((Brand?)null);
 
-        // Act & Assert
-        await Assert.ThrowsAsync<Exception>(() => _service.DeleteAsync(id));
+        // Act
+        var exception = await Assert.ThrowsAsync<KeyNotFoundException>(
+            () => _brandService.DeleteAsync(brandId));
+
+        // Assert
+        Assert.Equal($"Brand id '{brandId}' not found.", exception.Message);
+
+        _brandRepoMock.Verify(repo => repo.DeleteAsync(It.IsAny<Brand>()), Times.Never);
     }
 
-    #endregion
+    [Fact]
+    public void MapToBrandDetailDto_ShouldMapBrandToBrandDetailDto()
+    {
+        // Arrange
+        var brand = new Brand
+        {
+            Id = Guid.NewGuid(),
+            Name = "Apple",
+            Slug = "apple",
+            Description = "Apple products",
+            Status = BrandStatus.Active,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        // Act
+        var result = BrandService.MapToBrandDetailDto(brand);
+
+        // Assert
+        Assert.Equal(brand.Id, result.Id);
+        Assert.Equal(brand.Name, result.Name);
+        Assert.Equal(brand.Slug, result.Slug);
+        Assert.Equal(brand.Description, result.Description);
+        Assert.Equal(brand.Status, result.Status);
+        Assert.Equal(brand.CreatedAt, result.CreatedAt);
+        Assert.Equal(brand.UpdatedAt, result.UpdatedAt);
+    }
 }
