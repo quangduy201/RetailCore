@@ -8,5 +8,7 @@ public class GetProductsRequest : PaginationRequest
     public string? Keyword { get; set; }
     public Guid? BrandId { get; set; }
     public Guid? CategoryId { get; set; }
+    public string? Brand { get; set; }
+    public string? Category { get; set; }
     public ProductStatus? Status { get; set; }
 }

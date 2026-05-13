@@ -19,6 +19,8 @@ public class ProductRepository : IProductRepository
         string? keyword,
         Guid? brandId,
         Guid? categoryId,
+        string? brandSlug,
+        string? categorySlug,
         ProductStatus? status,
         int pageNumber,
         int pageSize)
@@ -37,8 +39,14 @@ public class ProductRepository : IProductRepository
         if (categoryId.HasValue)
             query = query.Where(p => p.CategoryId == categoryId);
 
+        if (!string.IsNullOrWhiteSpace(categorySlug))
+            query = query.Where(p => p.Category.Slug == categorySlug);
+
         if (brandId.HasValue)
             query = query.Where(p => p.BrandId == brandId);
+
+        if (!string.IsNullOrWhiteSpace(brandSlug))
+            query = query.Where(p => p.Brand.Slug == brandSlug);
 
         if (status.HasValue)
             query = query.Where(p => p.Status == status);
