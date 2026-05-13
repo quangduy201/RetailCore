@@ -205,6 +205,38 @@ public class AuthService : IAuthService
 
         var roles = await _userManager.GetRolesAsync(user);
 
+        return MapUserDto(user, roles);
+    }
+
+    public async Task<UserDto> UpdateCurrentUserAsync(Guid userId, UpdateProfileRequest request)
+    {
+        var user = await _userManager.FindByIdAsync(userId.ToString());
+
+        if (user == null)
+            throw new KeyNotFoundException("User not found.");
+
+        var fullName = request.FullName.Trim();
+
+        if (string.IsNullOrWhiteSpace(fullName))
+            throw new InvalidOperationException("Full name is required.");
+
+        user.FullName = fullName;
+        user.AvatarUrl = request.AvatarUrl?.Trim() ?? string.Empty;
+        user.UpdatedAt = DateTime.UtcNow;
+
+        var result = await _userManager.UpdateAsync(user);
+        if (!result.Succeeded)
+        {
+            throw new InvalidOperationException(string.Join(", ", result.Errors.Select(e => e.Description)));
+        }
+
+        var roles = await _userManager.GetRolesAsync(user);
+
+        return MapUserDto(user, roles);
+    }
+
+    private static UserDto MapUserDto(AppUser user, IEnumerable<string> roles)
+    {
         return new UserDto
         {
             Id = user.Id,

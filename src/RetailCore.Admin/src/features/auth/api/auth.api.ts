@@ -6,6 +6,7 @@ import type {
   RefreshTokenRequest,
   User,
   LogoutRequest,
+  UpdateProfileRequest,
 } from "../types";
 
 const API_BASE_URL = "/auth";
@@ -46,6 +47,11 @@ export const authApi = {
 
   me: async (): Promise<User> => {
     const response = await http.get<User>(`${API_BASE_URL}/me`);
+    return response.data;
+  },
+
+  updateProfile: async (data: UpdateProfileRequest): Promise<User> => {
+    const response = await http.put<User>(`${API_BASE_URL}/me`, data);
     return response.data;
   },
 };

@@ -1,0 +1,96 @@
+@page
+@model RetailCore.Customer.Pages.Account.ProfileModel
+@{
+    ViewData["Title"] = "My Profile";
+    var profile = Model.Profile;
+}
+
+<section class="py-5">
+    <div class="container-lg">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="d-flex align-items-center justify-content-between mb-4">
+                    <div>
+                        <h1 class="display-6 fw-bold mb-1">My Profile</h1>
+                        <p class="text-muted mb-0">View and update your account details.</p>
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+                {
+                    <div class="alert alert-danger">@Model.ErrorMessage</div>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(Model.SuccessMessage))
+                {
+                    <div class="alert alert-success">@Model.SuccessMessage</div>
+                }
+
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center gap-3 border-bottom pb-4 mb-4">
+                            @if (!string.IsNullOrWhiteSpace(Model.Input.AvatarUrl))
+                            {
+                                <img src="@Model.Input.AvatarUrl" alt="@Model.Input.FullName" class="rounded-circle object-fit-cover" width="72" height="72" />
+                            }
+                            else
+                            {
+                                <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center fs-3" style="width: 72px; height: 72px;">
+                                    @(Model.Input.FullName.FirstOrDefault())
+                                </div>
+                            }
+
+                            <div>
+                                <h2 class="h5 fw-bold mb-1">@Model.Input.FullName</h2>
+                                <p class="text-muted mb-0">@profile?.Email</p>
+                            </div>
+                        </div>
+
+                        <form method="post" class="row g-4">
+                            <div class="col-md-6">
+                                <label asp-for="Input.FullName" class="form-label fw-semibold">Full Name</label>
+                                <input asp-for="Input.FullName" class="form-control form-control-lg rounded-3" />
+                                <span asp-validation-for="Input.FullName" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Email</label>
+                                <input value="@profile?.Email" class="form-control form-control-lg rounded-3" readonly />
+                            </div>
+
+                            <div class="col-12">
+                                <label asp-for="Input.AvatarUrl" class="form-label fw-semibold">Avatar URL</label>
+                                <input asp-for="Input.AvatarUrl" class="form-control form-control-lg rounded-3" placeholder="https://..." />
+                                <span asp-validation-for="Input.AvatarUrl" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Account Status</label>
+                                <div>
+                                    <span class="badge @(profile?.IsActive == true ? "bg-success" : "bg-warning text-dark")">
+                                        @(profile?.IsActive == true ? "Active" : "Inactive")
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Joined</label>
+                                <div class="text-muted">@profile?.CreatedAt.ToString("MMM dd, yyyy")</div>
+                            </div>
+
+                            <div class="col-12 d-flex justify-content-end">
+                                <button type="submit" class="btn btn-primary-gradient">
+                                    Save Changes
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

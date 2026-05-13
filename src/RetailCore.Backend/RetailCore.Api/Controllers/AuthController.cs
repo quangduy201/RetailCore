@@ -71,4 +71,17 @@ public class AuthController : ControllerBase
         var result = await _authService.GetCurrentUserAsync(Guid.Parse(userId));
         return Ok(result);
     }
+
+    [Authorize]
+    [HttpPut("me")]
+    public async Task<IActionResult> UpdateMe([FromBody] UpdateProfileRequest request)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrWhiteSpace(userId))
+            return Unauthorized();
+
+        var result = await _authService.UpdateCurrentUserAsync(Guid.Parse(userId), request);
+        return Ok(result);
+    }
 }
