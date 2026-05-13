@@ -11,8 +11,10 @@ export const customerApi = {
     return response.data;
   },
 
-  async getById(id: UserDto["id"]): Promise<void> {
-    await http.get(`${BASE_URL}/${id}`);
+  async getById(id: UserDto["id"]): Promise<UserDto> {
+    const response = await http.get<UserDto>(`${BASE_URL}/${id}`);
+
+    return response.data;
   },
 
   async toggleActiveStatus(id: UserDto["id"]): Promise<void> {

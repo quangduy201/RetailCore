@@ -4,6 +4,7 @@ export interface User {
   fullName: string;
   avatarUrl: string;
   roles: string[];
+  isActive: boolean;
   createdAt?: string;
 }
 
@@ -39,4 +40,9 @@ export interface RefreshTokenRequest {
 
 export interface LogoutRequest {
   refreshToken: string;
+}
+
+export interface UpdateProfileRequest {
+  fullName: string;
+  avatarUrl?: string | null;
 }

@@ -12,4 +12,5 @@ public interface IAuthService
     Task LogoutAsync(LogoutRequest request);
     Task LogoutAllAsync(Guid userId);
     Task<UserDto> GetCurrentUserAsync(Guid userId);
+    Task<UserDto> UpdateCurrentUserAsync(Guid userId, UpdateProfileRequest request);
 }
