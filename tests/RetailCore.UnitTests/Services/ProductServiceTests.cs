@@ -35,6 +35,8 @@ public class ProductServiceTests
             Keyword = "iphone",
             BrandId = Guid.NewGuid(),
             CategoryId = Guid.NewGuid(),
+            Brand = "",
+            Category = "",
             Status = ProductStatus.Active,
             PageNumber = 1,
             PageSize = 10
@@ -50,6 +52,8 @@ public class ProductServiceTests
                 request.Keyword,
                 request.BrandId,
                 request.CategoryId,
+                request.Brand,
+                request.Category,
                 request.Status,
                 request.PageNumber,
                 request.PageSize))
