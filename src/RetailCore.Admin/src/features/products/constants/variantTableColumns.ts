@@ -38,12 +38,12 @@ export const VARIANT_TABLE_COLUMNS: VariantTableColumn[] = [
     defaultWidth: 120,
     minWidth: 120,
   },
-  {
-    key: "status",
-    label: "Status",
-    defaultWidth: 150,
-    minWidth: 150,
-  },
+  // {
+  //   key: "status",
+  //   label: "Status",
+  //   defaultWidth: 150,
+  //   minWidth: 150,
+  // },
   {
     key: "active",
     label: "Active",

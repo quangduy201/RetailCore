@@ -1,14 +1,6 @@
-import {
-  Chip,
-  Input,
-  ListBox,
-  Select,
-  Switch,
-  Table,
-} from "@heroui/react";
+import { Chip, Input, Switch, Table } from "@heroui/react";
 
 import type { VariantFormValue } from "../../../types/forms";
-import { ProductVariantStatus } from "@/shared/types/enums";
 import { VARIANT_TABLE_COLUMNS } from "@/features/products/constants/variantTableColumns";
 
 interface Props {
@@ -17,15 +9,8 @@ interface Props {
 }
 
 export function VariantTable({ variants, onUpdate }: Readonly<Props>) {
-  const statusOptions = Object.entries(ProductVariantStatus)
-    .filter(([, value]) => typeof value === "number")
-    .map(([key, value]) => ({
-      value,
-      label: key,
-    }));
-
   return (
-    <Table className="border-2">
+    <Table className="border-2 w-fit">
       <Table.ResizableContainer className="min-h-60 max-h-[calc(100vh-200px)] overflow-auto">
         <Table.Content>
           <Table.Header columns={VARIANT_TABLE_COLUMNS}>
@@ -93,7 +78,7 @@ export function VariantTable({ variants, onUpdate }: Readonly<Props>) {
                   />
                 </Table.Cell>
 
-                <Table.Cell>
+                {/* <Table.Cell>
                   <Select
                     defaultValue={variant.status}
                     placeholder="Select"
@@ -117,7 +102,7 @@ export function VariantTable({ variants, onUpdate }: Readonly<Props>) {
                       </ListBox>
                     </Select.Popover>
                   </Select>
-                </Table.Cell>
+                </Table.Cell> */}
 
                 <Table.Cell className="sticky right-0 border-l backdrop-blur-xs">
                   <Switch

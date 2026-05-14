@@ -186,7 +186,11 @@ export default function BrandEditPage() {
             </div>
 
             {/* Description */}
-            <TextField className="w-full" value={description}>
+            <TextField
+              className="w-full"
+              value={description}
+              onChange={setDescription}
+            >
               <Label>Description</Label>
               <TextArea
                 placeholder="Add a description for this brand"

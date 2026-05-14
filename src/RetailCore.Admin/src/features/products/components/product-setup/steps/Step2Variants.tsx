@@ -92,7 +92,7 @@ export function Step2Variants({
           attributeValueIds,
           price: matchedVariant?.price ?? 0,
           stock: matchedVariant?.stock ?? 0,
-          status: matchedVariant?.status ?? ProductVariantStatus.Draft,
+          status: matchedVariant?.status ?? ProductVariantStatus.Active,
           isSelected: matchedVariant != null,
           images:
             matchedVariant?.images.map((image) => ({
@@ -192,7 +192,9 @@ export function Step2Variants({
           </Alert>
         )}
 
-        <VariantTable variants={variants} onUpdate={updateVariant} />
+        <div className="flex justify-center">
+          <VariantTable variants={variants} onUpdate={updateVariant} />
+        </div>
 
         <div className="flex gap-3 border-t border-default-200 pt-6">
           <Button variant="secondary" onPress={onBack} className="flex-1">
