@@ -10,7 +10,9 @@ public interface IProductApi
     Task<PagedResult<ProductSummaryDto>> GetProductsAsync(
         [Query] int pageNumber = 1,
         [Query] int pageSize = 9,
-        [Query] string? category = null);
+        [Query] string? keyword = null,
+        [AliasAs("brand")] string? brandSlug = null,
+        [AliasAs("category")] string? categorySlug = null);
 
     [Get("/products/slug/{slug}")]
     Task<ProductDetailDto> GetBySlugAsync(string slug);

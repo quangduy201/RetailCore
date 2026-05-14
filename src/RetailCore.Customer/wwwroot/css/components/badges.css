@@ -1,0 +1,14 @@
+.badge-delivered {
+  background-color: #d1e7dd !important;
+  color: #0f5132 !important;
+}
+
+.badge-shipped {
+  background-color: #cfe2ff !important;
+  color: #084298 !important;
+}
+
+.badge-pending {
+  background-color: #fff3cd !important;
+  color: #664d03 !important;
+}

@@ -1,319 +1,413 @@
 @page "{slug}"
+@using System.Text.Json
+@using RetailCore.Shared.Enums
 @model RetailCore.Customer.Pages.Products.DetailsModel
+
 @{
     ViewData["Title"] = Model.Product?.Name;
-    var product = Model.Product;
-}
 
-@if (product == null)
-{
-    <div class="text-center py-5">
-        <p class="text-muted fs-5">Product not found.</p>
-    </div>
-    return;
+    var product = Model.Product;
+
+    if (product == null)
+    {
+        <div class="text-center py-5">
+            <p class="text-muted fs-5">Product not found.</p>
+        </div>
+        return;
+    }
+
+    var selectedVariant =
+        product.Variants.FirstOrDefault(v => v.Status == ProductVariantStatus.Active && v.Stock > 0)
+        ?? product.Variants.FirstOrDefault();
+
+    var selectedImages = selectedVariant?.Images
+        .OrderBy(i => i.SortOrder)
+        .ToList() ?? [];
+
+    var allImages = product.Variants
+        .SelectMany(v => v.Images)
+        .OrderBy(i => i.SortOrder)
+        .ToList();
+
+    var initialImages = selectedImages.Any() ? selectedImages : allImages;
+    var placeholderUrl = Url.Content("~/assets/images/placeholder.svg");
+    var mainImage = initialImages.FirstOrDefault(i => i.IsPrimary)?.Url
+        ?? initialImages.FirstOrDefault()?.Url
+        ?? placeholderUrl;
+
+    var selectedAttributeValueIds = selectedVariant?.Attributes
+        .Select(a => a.AttributeValueId)
+        .ToHashSet() ?? [];
+
+    var variantData = product.Variants.Select(variant => new
+    {
+        id = variant.Id,
+        name = variant.Name,
+        sku = variant.Sku,
+        price = variant.Price,
+        compareAtPrice = variant.CompareAtPrice,
+        discountPercentage = variant.DiscountPercentage,
+        stock = variant.Stock,
+        status = variant.Status.ToString(),
+        isActive = variant.Status == ProductVariantStatus.Active,
+        isPurchasable = variant.Stock > 0,
+        attributes = variant.Attributes.Select(attribute => new
+        {
+            attributeId = attribute.AttributeId,
+            attributeName = attribute.AttributeName,
+            attributeValueId = attribute.AttributeValueId,
+            attributeValue = attribute.AttributeValue
+        }),
+        images = variant.Images
+            .OrderBy(image => image.SortOrder)
+            .Select(image => new
+            {
+                url = image.Url,
+                isPrimary = image.IsPrimary,
+                sortOrder = image.SortOrder
+            })
+    });
+
+    var variantsJson = JsonSerializer.Serialize(variantData);
 }
 
 <section class="py-5">
     <div class="container-lg">
-        <!-- Breadcrumb -->
         <nav aria-label="breadcrumb" class="mb-4">
             <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a asp-page="/Index">Home</a></li>
-                <li class="breadcrumb-item"><a asp-page="/Products/Index">Products</a></li>
+                <li class="breadcrumb-item">
+                    <a asp-page="/Index">Home</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a asp-page="/Products/Index">Products</a>
+                </li>
                 <li class="breadcrumb-item active">@product.Name</li>
             </ol>
         </nav>
 
-        <!-- Product details -->
-        <div class="row g-5 mb-5">
-            <!-- Image Gallery -->
+        <div class="row g-5">
             <div class="col-lg-5">
-                @{
-                    var images = product.Images.Any() ? product.Images : new List<string> { "/images/placeholder.png" };
-                    var placeholderUrl = @Url.Content("~/assets/images/placeholder.svg");
-                }
-                <div class="mb-3"
-                     style="background-color: #f3f4f6; border-radius: 0.5rem; height: 28rem; display: flex; align-items: center; justify-content: center; overflow: hidden;">
-                    <img id="main-product-image" src="@images.First()" alt="@product.Name"
-                         style="width: 100%; height: 100%; object-fit: cover;"
-                         onerror="this.onerror=null; this.src='@placeholderUrl';" />
+                <div class="mb-3 rounded overflow-hidden bg-light" style="height: 28rem;">
+                    <img id="main-product-image" src="@mainImage" alt="@product.Name" class="w-100 h-100"
+                         style="object-fit: cover;" onerror="this.onerror=null; this.src='@placeholderUrl';" />
                 </div>
 
-                
                 <div class="position-relative">
-                    <!-- Left arrow -->
                     <button type="button"
                             class="btn btn-light position-absolute top-50 start-0 translate-middle-y shadow-sm"
-                            style="z-index: 1;" onclick="scrollGallery(-1)">
+                            style="z-index: 1;" onclick="scrollGallery(-1)" aria-label="Previous image">
                         <i class="fas fa-chevron-left"></i>
                     </button>
 
-                    <!-- Scroll container -->
                     <div id="thumbnail-scroll" class="d-flex gap-2 overflow-auto py-2" style="scroll-behavior: smooth;">
-                        @foreach (var img in images)
+                        @foreach (var image in initialImages)
                         {
-                            <img src="@img" alt="Thumbnail" class="img-thumbnail"
-                                 style="width: 80px; height: 80px; object-fit: cover; cursor: pointer;"
-                                 onclick="document.getElementById('main-product-image').src='@img';"
-                                 onerror="this.onerror=null; this.src='@placeholderUrl';" />
+                            <button type="button" class="btn p-0 border-0 bg-transparent"
+                                    onclick="changeMainImage('@image.Url')">
+                                <img src="@image.Url" alt="Thumbnail" class="img-thumbnail"
+                                     style="width: 80px; height: 80px; object-fit: cover;"
+                                     onerror="this.onerror=null; this.src='@placeholderUrl';" />
+                            </button>
                         }
                     </div>
 
-                    <!-- Right arrow -->
                     <button type="button"
                             class="btn btn-light position-absolute top-50 end-0 translate-middle-y shadow-sm"
-                            style="z-index: 1;" onclick="scrollGallery(1)">
+                            style="z-index: 1;" onclick="scrollGallery(1)" aria-label="Next image">
                         <i class="fas fa-chevron-right"></i>
                     </button>
                 </div>
             </div>
 
-            <!-- Product Info -->
             <div class="col-lg-7">
-                <small class="text-muted text-uppercase">@product.Brand.Name</small>
+                <small class="text-muted text-uppercase">@product.BrandName</small>
+
                 <h1 class="display-5 fw-bold mb-3">@product.Name</h1>
 
-                <!-- Rating -->
-                <div class="d-flex align-items-center gap-2 mb-3">
-                    <div class="d-flex gap-1">
-                        @for (int i = 0; i < 5; i++)
-                        {
-                            if (i < Math.Floor(product.AverageRating))
-                            {
-                                <i class="fas fa-star star"></i>
-                            }
-                            else if (i < product.AverageRating)
-                            {
-                                <i class="fas fa-star-half-alt star"></i>
-                            }
-                            else
-                            {
-                                <i class="far fa-star" style="color: #d1d5db;"></i>
-                            }
-                        }
-                    </div>
-                    <small class="text-muted">
-                        @product.AverageRating.ToString("F1") (@product.ReviewCount reviews)
-                    </small>
-                </div>
+                @if (!string.IsNullOrWhiteSpace(product.ShortDescription))
+                {
+                    <p class="lead text-muted mb-4">@product.ShortDescription</p>
+                }
 
-                <!-- Price -->
                 <div class="mb-4">
-                    <div class="d-flex align-items-center gap-2">
-                        <span id="price" class="fs-3 fw-bold">
-                            @product.Variants.First().Price.ToString("C")
+                    <div class="d-flex align-items-center gap-3 flex-wrap">
+                        <span id="price" class="fs-2 fw-bold">
+                            @(selectedVariant?.Price.ToString("C") ?? "N/A")
                         </span>
 
-                        <span id="compare-price" class="text-muted text-decoration-line-through">
-                            @product.Variants.First().CompareAtPrice?.ToString("C")
-                        </span>
-
+                        <span id="compare-price" class="text-muted text-decoration-line-through"></span>
                         <span id="discount-badge" class="badge bg-danger"></span>
                     </div>
                 </div>
 
-                <!-- Description -->
-                <p class="text-muted mb-4">@product.Description</p>
+                @if (!string.IsNullOrWhiteSpace(product.Description))
+                {
+                    <div class="mb-4">
+                        <p class="text-muted">@product.Description</p>
+                    </div>
+                }
 
-                <!-- Stock Status -->
                 <div class="mb-4 pb-4 border-bottom">
-                    @if (product.Status == "Active")
-                    {
-                        <span class="d-inline-flex align-items-center gap-2 text-success fw-semibold">
-                            <i class="fas fa-check-circle"></i> In Stock
-                        </span>
-                    }
-                    else
-                    {
-                        <span class="d-inline-flex align-items-center gap-2 text-danger fw-semibold">
-                            <i class="fas fa-times-circle"></i> Out of Stock
-                        </span>
-                    }
+                    <span id="stock-status" class="fw-semibold"></span>
+                    <div id="variant-sku" class="small text-muted mt-1"></div>
                 </div>
 
-                <!-- Variants & Attributes -->
-                @if (product.Variants.Any())
+                @if (product.Attributes.Any())
                 {
                     <div class="mb-4 pb-4 border-bottom">
-                        <h5 class="fw-bold mb-3">Available Options</h5>
-                        <div class="d-flex flex-column gap-3">
-                            @foreach (var variant in product.Variants)
+                        <h5 class="fw-bold mb-3">Choose Options</h5>
+
+                        <div class="d-flex flex-column gap-4">
+                            @foreach (var optionGroup in product.Attributes)
                             {
-                                var isChecked = variant == product.Variants.First();
-                                <input id="variant-@variant.Id" value="@variant.Id" type="radio" class="btn-check"
-                                       name="variantId" autocomplete="off" @(isChecked ? "checked" : "") />
+                                <fieldset>
+                                    <legend class="h6 fw-semibold mb-2">@optionGroup.Name</legend>
 
-                                <label for="variant-@variant.Id"
-                                       class="btn btn-outline-secondary text-start d-flex align-items-center p-3"
-                                       data-price="@variant.Price" data-compare="@variant.CompareAtPrice">
-                                    <div class="d-flex flex-column gap-1">
-                                        <span class="fw-semibold">
-                                            @string.Join(" / ", variant.Attributes.Values)
-                                        </span>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        @foreach (var value in optionGroup.Values)
+                                        {
+                                            var isChecked = selectedAttributeValueIds.Contains(value.Id);
+                                            var inputId = $"attribute-{optionGroup.Id}-{value.Id}";
 
-                                        <div class="d-flex flex-wrap gap-2">
-                                            @foreach (var attr in variant.Attributes)
-                                            {
-                                                <span class="badge" style="background-color: var(--primary-color);">
-                                                    @attr.Key: @attr.Value
-                                                </span>
-                                            }
-                                        </div>
+                                            <input id="@inputId" type="radio" class="btn-check variant-option"
+                                                   name="option-@optionGroup.Id" value="@value.Id" data-attribute-id="@optionGroup.Id"
+                                                   autocomplete="off" @(isChecked ? "checked" : "") />
+                                            <label for="@inputId" class="btn btn-outline-secondary rounded-pill px-3">
+                                                @value.Value
+                                            </label>
+                                        }
                                     </div>
-
-                                    <span class="ms-auto fw-bold">
-                                        @variant.Price.ToString("C")
-                                    </span>
-                                </label>
+                                </fieldset>
                             }
+                        </div>
+
+                        <div id="variant-warning" class="alert alert-warning mt-4 mb-0 d-none">
+                            This combination is not available. Choose a different option.
                         </div>
                     </div>
                 }
 
-                <!-- Quantity -->
                 <div class="mb-4 pb-4 border-bottom">
                     <h5 class="fw-bold mb-3">Quantity</h5>
+
                     <div class="d-flex align-items-center gap-2" style="width: fit-content;">
-                        <button class="btn btn-light border rounded-corner" style="width: 42px"
-                                onclick="decreaseQuantity()">-</button>
-                        <input id="quantity-input" type="text" inputmode="numeric" value="1"
-                               class="form-control text-center border rounded-corner px-0" style="width: 50px"
-                               oninput="handleQuantityInput(this)" onblur="this.value = this.value || '1'" />
-                        <button class=" btn btn-light border rounded-corner" style="width: 42px"
-                                onclick="increaseQuantity()">+</button>
+                        <button id="decrease-quantity" type="button" class="btn btn-light border" style="width: 42px"
+                                onclick="decreaseQuantity()">
+                            -
+                        </button>
+
+                        <input id="quantity-input" type="number" min="1" value="1" class="form-control text-center"
+                               style="width: 72px;" />
+
+                        <button id="increase-quantity" type="button" class="btn btn-light border" style="width: 42px"
+                                onclick="increaseQuantity()">
+                            +
+                        </button>
                     </div>
                 </div>
 
-                <!-- Add to Cart Button -->
                 <div class="d-flex gap-3 mb-4">
-                    <button class="btn btn-primary-gradient flex-grow-1 py-3 fw-bold" style="font-size: 1rem;">
-                        <i class="fas fa-shopping-cart me-2"></i> Add to Cart
+                    <button id="add-to-cart-button" class="btn btn-primary-gradient flex-grow-1 py-3 fw-bold"
+                            type="button">
+                        <i class="fas fa-shopping-cart me-2"></i>
+                        Add to Cart
                     </button>
-                    <button class="btn btn-outline-secondary py-3 px-4 fw-bold">
+
+                    <button class="btn btn-outline-secondary px-4" type="button">
                         <i class="fas fa-heart"></i>
                     </button>
-                </div>
-
-                <!-- Additional Info -->
-                <div class="d-flex flex-column gap-2 small text-muted">
-                    <p class="mb-0">
-                        <i class="fas fa-truck me-2" style="color: var(--primary-color);"></i>
-                        Free shipping on orders over $50
-                    </p>
-                    <p class="mb-0">
-                        <i class="fas fa-undo me-2" style="color: var(--primary-color);"></i>
-                        30-day money-back guarantee
-                    </p>
-                    <p class="mb-0">
-                        <i class="fas fa-phone me-2" style="color: var(--primary-color);"></i>
-                        Expert support available 24/7
-                    </p>
                 </div>
             </div>
         </div>
     </div>
 </section>
 
-<style>
-    .btn-check+.btn.btn:hover {
-        color: var(--bs-btn-hover-color);
-        background-color: var(--bs-btn-hover-bg);
-        border-color: var(--bs-btn-hover-border-color);
-    }
-</style>
-
 <script>
+    const variants = @Html.Raw(variantsJson);
+    const placeholderUrl = '@placeholderUrl';
+    let selectedVariant = null;
+
+    function formatMoney(value) {
+        return Number(value || 0).toLocaleString(undefined, {
+            style: 'currency',
+            currency: 'USD'
+        });
+    }
+
+    function getSelectedAttributeValueIds() {
+        return Array
+            .from(document.querySelectorAll('.variant-option:checked'))
+            .map(input => input.value)
+            .sort();
+    }
+
+    function findMatchingVariant() {
+        const selectedValues = getSelectedAttributeValueIds();
+
+        return variants.find(variant => {
+            const variantValues = variant.attributes
+                .map(attribute => String(attribute.attributeValueId))
+                .sort();
+
+            return selectedValues.length === variantValues.length &&
+                selectedValues.every((value, index) => value === variantValues[index]);
+        }) || null;
+    }
+
+    function changeMainImage(url) {
+        document.getElementById('main-product-image').src = url || placeholderUrl;
+    }
+
+    function renderThumbnails(images) {
+        const container = document.getElementById('thumbnail-scroll');
+        const safeImages = images && images.length > 0
+            ? images
+            : [{ url: placeholderUrl }];
+
+        container.innerHTML = safeImages
+            .map(image => `
+                <button type="button" class="btn p-0 border-0 bg-transparent" onclick="changeMainImage('${image.url}')">
+                    <img src="${image.url}" alt="Thumbnail" class="img-thumbnail" style="width: 80px; height: 80px; object-fit: cover;" onerror="this.onerror=null; this.src='${placeholderUrl}';" />
+                </button>
+            `)
+            .join('');
+
+        const primaryImage = safeImages.find(image => image.isPrimary) || safeImages[0];
+        changeMainImage(primaryImage.url);
+    }
+
+    function updatePrice(variant) {
+        document.getElementById('price').textContent = formatMoney(variant.price);
+
+        const compareEl = document.getElementById('compare-price');
+        const discountEl = document.getElementById('discount-badge');
+
+        if (variant.compareAtPrice && variant.compareAtPrice > variant.price) {
+            compareEl.textContent = formatMoney(variant.compareAtPrice);
+            compareEl.classList.remove('d-none');
+
+            const discount = variant.discountPercentage
+                ? Math.round(variant.discountPercentage)
+                : Math.round(((variant.compareAtPrice - variant.price) / variant.compareAtPrice) * 100);
+
+            discountEl.textContent = `Save ${discount}%`;
+            discountEl.classList.remove('d-none');
+        } else {
+            compareEl.classList.add('d-none');
+            discountEl.classList.add('d-none');
+        }
+    }
+
+    function updateStockState(variant) {
+        const stockStatus = document.getElementById('stock-status');
+        const sku = document.getElementById('variant-sku');
+        const addToCart = document.getElementById('add-to-cart-button');
+        const quantity = document.getElementById('quantity-input');
+        const decrease = document.getElementById('decrease-quantity');
+        const increase = document.getElementById('increase-quantity');
+        const warning = document.getElementById('variant-warning');
+
+        if (!variant) {
+            stockStatus.className = 'text-warning fw-semibold';
+            stockStatus.innerHTML = '<i class="fas fa-exclamation-circle me-2"></i>Unavailable combination';
+            sku.textContent = '';
+            addToCart.disabled = true;
+            quantity.disabled = true;
+            decrease.disabled = true;
+            increase.disabled = true;
+            warning?.classList.remove('d-none');
+            return;
+        }
+
+        warning?.classList.add('d-none');
+        sku.textContent = variant.sku ? `SKU: ${variant.sku}` : '';
+
+        if (variant.isPurchasable) {
+            stockStatus.className = 'text-success fw-semibold';
+            stockStatus.innerHTML = `<i class="fas fa-check-circle me-2"></i>In Stock (${variant.stock} available)`;
+            addToCart.disabled = false;
+            quantity.disabled = false;
+            decrease.disabled = false;
+            increase.disabled = false;
+            quantity.max = variant.stock;
+            quantity.value = Math.min(Math.max(parseInt(quantity.value || '1'), 1), variant.stock);
+        } else if (variant.stock <= 0) {
+            stockStatus.className = 'text-danger fw-semibold';
+            stockStatus.innerHTML = '<i class="fas fa-times-circle me-2"></i>Out of Stock';
+            addToCart.disabled = true;
+            quantity.disabled = true;
+            decrease.disabled = true;
+            increase.disabled = true;
+            quantity.value = 1;
+        } else {
+            stockStatus.className = 'text-warning fw-semibold';
+            stockStatus.innerHTML = '<i class="fas fa-exclamation-circle me-2"></i>Currently unavailable';
+            addToCart.disabled = true;
+            quantity.disabled = true;
+            decrease.disabled = true;
+            increase.disabled = true;
+            quantity.value = 1;
+        }
+    }
+
+    function updateVariantUI() {
+        selectedVariant = findMatchingVariant();
+
+        if (selectedVariant) {
+            updatePrice(selectedVariant);
+            renderThumbnails(selectedVariant.images);
+        }
+
+        updateStockState(selectedVariant);
+    }
 
     function scrollGallery(direction) {
-        const container = document.getElementById('thumbnail-scroll');
-        const itemWidth = 80; // 80px image
-        const scrollAmount = itemWidth * direction;
-
-        container.scrollBy({
-            left: scrollAmount,
+        document.getElementById('thumbnail-scroll')?.scrollBy({
+            left: direction * 120,
             behavior: 'smooth'
         });
     }
 
-    function updateArrows() {
-        const container = document.getElementById('thumbnail-scroll');
-        const leftBtn = document.querySelector('[onclick="scrollGallery(-1)"]');
-        const rightBtn = document.querySelector('[onclick="scrollGallery(1)"]');
-
-        leftBtn.style.opacity = container.scrollLeft > 0 ? 1 : 0;
-        rightBtn.style.opacity = container.scrollLeft + container.clientWidth < container.scrollWidth ? 1 : 0;
-    }
-
     function increaseQuantity() {
+        if (!selectedVariant?.isPurchasable) {
+            return;
+        }
+
         const input = document.getElementById('quantity-input');
-        input.value = parseInt(input.value || '1') + 1;
+        const current = parseInt(input.value || '1');
+        input.value = Math.min(current + 1, selectedVariant.stock);
     }
 
     function decreaseQuantity() {
         const input = document.getElementById('quantity-input');
-        const currentValue = parseInt(input.value || '1');
-        if (currentValue > 1) {
-            input.value = currentValue - 1;
+        const current = parseInt(input.value || '1');
+
+        if (current > 1) {
+            input.value = current - 1;
         }
     }
 
-    function handleQuantityInput(input) {
-        const text = input.value.replace(/\D/g, '');
-        if (text === '') {
-            input.value = '';
-            return;
-        }
+    document.addEventListener('DOMContentLoaded', () => {
+        document
+            .querySelectorAll('.variant-option')
+            .forEach(input => input.addEventListener('change', updateVariantUI));
 
-        const value = parseInt(text);
-        if (isNaN(value) || value < 1) {
-            input.value = '1';
-        } else {
-            input.value = value;
-        }
-    }
+        document.getElementById('quantity-input')?.addEventListener('input', event => {
+            if (!selectedVariant?.isPurchasable) {
+                event.target.value = 1;
+                return;
+            }
 
-    function updateVariantUI(radio) {
-        const label = document.querySelector(`label[for="${radio.id}"]`);
-
-        const price = parseFloat(label.dataset.price || 0);
-        const compare = parseFloat(label.dataset.compare || 0);
-
-        const priceEl = document.getElementById('price');
-        const compareEl = document.getElementById('compare-price');
-        const discountEl = document.getElementById('discount-badge');
-
-        priceEl.textContent = price.toLocaleString(undefined, { style: 'currency', currency: 'USD' });
-
-        if (compare > price) {
-            compareEl.textContent = compare.toLocaleString(undefined, { style: 'currency', currency: 'USD' });
-            compareEl.style.display = 'inline';
-
-            const discount = Math.round((compare - price) / compare * 100);
-            discountEl.textContent = `Save ${discount}%`;
-            discountEl.style.display = 'inline';
-        } else {
-            compareEl.style.display = 'none';
-            discountEl.style.display = 'none';
-        }
-    }
-
-    document.querySelectorAll('input[name="variantId"]').forEach(radio => {
-        radio.addEventListener('change', function () {
-            updateVariantUI(this);
+            const quantity = parseInt(event.target.value || '1');
+            event.target.value = Math.min(Math.max(quantity, 1), selectedVariant.stock);
         });
-    });
 
-    document.addEventListener('DOMContentLoaded', function () {
-        const selected = document.querySelector('input[name="variantId"]:checked');
-        if (selected) {
-            updateVariantUI(selected);
-        }
+        document.getElementById('add-to-cart-button')?.addEventListener('click', () => {
+            if (!selectedVariant?.isPurchasable) {
+                return;
+            }
+        });
 
-        const thumbnailScroll = document.getElementById('thumbnail-scroll');
-        if (thumbnailScroll) {
-            thumbnailScroll.scrollLeft = 0;
-            updateArrows();
-            thumbnailScroll.addEventListener('scroll', updateArrows);
-        }
+        updateVariantUI();
     });
 </script>

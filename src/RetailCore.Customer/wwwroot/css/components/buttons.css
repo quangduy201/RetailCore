@@ -1,0 +1,26 @@
+.btn-primary-gradient {
+  background: var(--primary-gradient);
+  border: none;
+  color: white;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-primary-gradient:hover {
+  box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+  color: white;
+  transform: translateY(-2px);
+}
+
+.btn-outline-primary-gradient {
+  background: none;
+  border-color: var(--primary-gradient);
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-outline-primary-gradient:hover {
+  box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+  transform: translateY(-2px);
+  background: var(--primary-gradient);
+}

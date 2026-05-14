@@ -31,6 +31,8 @@ public class ProductService : IProductService
             request.Keyword,
             request.BrandId,
             request.CategoryId,
+            request.Brand,
+            request.Category,
             request.Status,
             request.PageNumber,
             request.PageSize);

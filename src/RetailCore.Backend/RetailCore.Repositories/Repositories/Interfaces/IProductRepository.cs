@@ -9,6 +9,8 @@ public interface IProductRepository
         string? keyword,
         Guid? brandId,
         Guid? categoryId,
+        string? brandSlug,
+        string? categorySlug,
         ProductStatus? status,
         int pageNumber,
         int pageSize);

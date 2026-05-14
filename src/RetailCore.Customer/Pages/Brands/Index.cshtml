@@ -1,0 +1,91 @@
+@page
+@model RetailCore.Customer.Pages.Brands.IndexModel
+@{
+    ViewData["Title"] = "Brands";
+}
+
+@functions {
+    public IDictionary<string, string> BuildRoute(int? p = null, string? keyword = null)
+    {
+        var route = new Dictionary<string, string>();
+
+        if (p.HasValue && p.Value > 1)
+        {
+            route["p"] = p.Value.ToString();
+        }
+
+        if (!string.IsNullOrWhiteSpace(keyword))
+        {
+            route["keyword"] = keyword;
+        }
+
+        return route;
+    }
+}
+
+<section class="py-5">
+    <div class="container-lg">
+        <div class="mb-4">
+            <div>
+                <h1 class="display-5 fw-bold mb-2">Brands</h1>
+                <p class="text-muted mb-0">Find products from the brands you already trust.</p>
+            </div>
+        </div>
+
+        <form method="get" asp-page="/Brands/Index" class="d-flex gap-2 mb-5">
+            <input name="keyword" value="@Model.Keyword" class="form-control" placeholder="Search brands..." />
+            <button class="btn btn-primary-gradient" type="submit">Search</button>
+        </form>
+
+        @if (Model.Brands.Any())
+        {
+            <div class="row g-3">
+                @foreach (var brand in Model.Brands)
+                {
+                    <div class="col-6 col-md-4 col-lg-3">
+                        <a asp-page="/Products/Index" asp-route-brand="@brand.Slug" class="text-decoration-none">
+                            <div class="card card-hover text-center p-4 h-100 border-0 shadow-sm">
+                                <div class="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mx-auto mb-3"
+                                     style="width: 70px; height: 70px;">
+                                    <i class="fas fa-award text-primary fs-3"></i>
+                                </div>
+                                <h5 class="fw-bold text-dark mb-2">@brand.Name</h5>
+                                <small class="text-muted">@brand.Slug</small>
+                            </div>
+                        </a>
+                    </div>
+                }
+            </div>
+
+            @if (Model.TotalPages > 1)
+            {
+                <nav aria-label="Brands pagination" class="mt-5">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item @(Model.HasPreviousPage ? "" : "disabled")">
+                            <a class="page-link" asp-page="/Brands/Index"
+                               asp-all-route-data="BuildRoute(Model.CurrentPage - 1, Model.Keyword)">Previous</a>
+                        </li>
+                        @for (var i = 1; i <= Model.TotalPages; i++)
+                        {
+                            <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                                <a class="page-link" asp-page="/Brands/Index"
+                                   asp-all-route-data="BuildRoute(i, Model.Keyword)">@i</a>
+                            </li>
+                        }
+                        <li class="page-item @(Model.HasNextPage ? "" : "disabled")">
+                            <a class="page-link" asp-page="/Brands/Index"
+                               asp-all-route-data="BuildRoute(Model.CurrentPage + 1, Model.Keyword)">Next</a>
+                        </li>
+                    </ul>
+                </nav>
+            }
+        }
+        else
+        {
+            <div class="text-center py-5">
+                <i class="fas fa-inbox display-6 text-muted mb-3"></i>
+                <p class="text-muted fs-5">No brands found.</p>
+            </div>
+        }
+    </div>
+</section>

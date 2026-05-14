@@ -9,5 +9,6 @@ public interface IBrandApi
     [Get("/brands")]
     Task<PagedResult<BrandSummaryDto>> GetBrandsAsync(
         [Query] int pageNumber = 1,
-        [Query] int pageSize = 10);
+        [Query] int pageSize = 10,
+        [Query] string? keyword = null);
 }

@@ -1,24 +1,37 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using RetailCore.Customer.Services;
+using Refit;
+using RetailCore.Customer.Services.Api;
+using RetailCore.Shared.DTOs.Product;
 
 namespace RetailCore.Customer.Pages.Products;
 
 public class DetailsModel : PageModel
 {
-    private readonly ECommerceService _service;
-    public ProductModel? Product { get; set; }
+    private readonly IProductApi _productApi;
+    public ProductDetailDto? Product { get; set; }
 
-    public DetailsModel(ECommerceService service)
+    public DetailsModel(IProductApi productApi)
     {
-        _service = service;
+        _productApi = productApi;
     }
 
-    public IActionResult OnGet(string slug)
+    public async Task<IActionResult> OnGetAsync(string slug)
     {
-        Product = _service.GetProducts().FirstOrDefault(p => p.Slug == slug || p.Name == slug);
-        if (Product == null)
+        try
+        {
+            Product = await _productApi.GetBySlugAsync(slug);
+
+            if (Product == null)
+            {
+                return NotFound();
+            }
+
+            return Page();
+        }
+        catch (ApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
             return NotFound();
-        return Page();
+        }
     }
 }
