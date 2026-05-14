@@ -12,7 +12,7 @@ public class IndexModel : PageModel
     private readonly ICategoryApi _categoryApi;
     private readonly IBrandApi _brandApi;
 
-    public List<ProductSummaryDto> FeaturedProducts { get; set; } = [];
+    public List<ProductSummaryDto> LatestProducts { get; set; } = [];
     public List<CategorySummaryDto> Categories { get; set; } = [];
     public List<BrandSummaryDto> Brands { get; set; } = [];
 
@@ -28,7 +28,7 @@ public class IndexModel : PageModel
 
     public async Task OnGetAsync()
     {
-        FeaturedProducts =
+        LatestProducts =
             (await _productApi.GetProductsAsync(1, 4))
             .Items
             .ToList();

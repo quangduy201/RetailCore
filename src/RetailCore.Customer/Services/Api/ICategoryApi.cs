@@ -9,5 +9,6 @@ public interface ICategoryApi
     [Get("/categories")]
     Task<PagedResult<CategorySummaryDto>> GetCategoriesAsync(
         [Query] int pageNumber = 1,
-        [Query] int pageSize = 10);
+        [Query] int pageSize = 10,
+        [Query] string? keyword = null);
 }
