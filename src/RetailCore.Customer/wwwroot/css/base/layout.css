@@ -1,0 +1,14 @@
+main {
+  min-height: 100vh;
+}
+
+.sticky-card {
+  position: sticky;
+  top: 100px;
+}
+
+@media (max-width: 768px) {
+  .sticky-card {
+    position: static;
+  }
+}
