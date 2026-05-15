@@ -183,7 +183,7 @@ public class AuthService : IAuthService
     public async Task LogoutAllAsync(Guid userId)
     {
         var refreshTokens = await _refreshTokenRepo.GetActiveByUserIdAsync(userId);
-        if (refreshTokens.IsNullOrEmpty())
+        if (refreshTokens == null || refreshTokens.Count == 0)
             return;
 
         foreach (var refreshToken in refreshTokens)
