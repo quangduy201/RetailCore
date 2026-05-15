@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Options;
 using RetailCore.Repositories.Entities;
 using RetailCore.Services.Interfaces;
 using RetailCore.Services.Options;
@@ -10,12 +11,12 @@ public class IdentitySeederService : IIdentitySeederService
 {
     private readonly RoleManager<AppRole> _roleManager;
     private readonly UserManager<AppUser> _userManager;
-    private readonly AdminOptions _adminOptions;
+    private readonly IOptions<AdminOptions> _adminOptions;
 
     public IdentitySeederService(
         RoleManager<AppRole> roleManager,
         UserManager<AppUser> userManager,
-        AdminOptions adminOptions)
+        IOptions<AdminOptions> adminOptions)
     {
         _roleManager = roleManager;
         _userManager = userManager;
@@ -42,7 +43,7 @@ public class IdentitySeederService : IIdentitySeederService
             });
         }
 
-        var adminEmail = _adminOptions.Email;
+        var adminEmail = _adminOptions.Value.Email;
 
         var adminUser = await _userManager.FindByEmailAsync(adminEmail);
 
@@ -52,11 +53,11 @@ public class IdentitySeederService : IIdentitySeederService
             {
                 Email = adminEmail,
                 UserName = adminEmail,
-                FullName = _adminOptions.FullName,
-                AvatarUrl = _adminOptions.AvatarUrl,
+                FullName = _adminOptions.Value.FullName,
+                AvatarUrl = _adminOptions.Value.AvatarUrl,
             };
 
-            var result = await _userManager.CreateAsync(adminUser, _adminOptions.Password);
+            var result = await _userManager.CreateAsync(adminUser, _adminOptions.Value.Password);
 
             if (result.Succeeded)
             {

@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Options;
 using RetailCore.Repositories.Repositories.Interfaces;
 using RetailCore.Services.Interfaces;
 using RetailCore.Services.Options;
@@ -8,12 +9,12 @@ namespace RetailCore.Services.Implementations;
 public class UserService : IUserService
 {
     private readonly IUserRepository _userRepository;
-    private readonly AdminOptions _adminOptions;
+    private readonly IOptions<AdminOptions> _adminOptions;
     private readonly IUnitOfWork _unitOfWork;
 
     public UserService(
         IUserRepository userRepository,
-        AdminOptions adminOptions,
+        IOptions<AdminOptions> adminOptions,
         IUnitOfWork unitOfWork)
     {
         _userRepository = userRepository;
@@ -65,7 +66,7 @@ public class UserService : IUserService
             throw new KeyNotFoundException("User not found.");
         }
 
-        if (string.Equals(user.Email, _adminOptions.Email, StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(user.Email, _adminOptions.Value.Email, StringComparison.OrdinalIgnoreCase))
         {
             throw new InvalidOperationException("Default admin account cannot be deactivated.");
         }
