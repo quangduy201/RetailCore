@@ -16,6 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../../src/RetailCore.Backend/RetailCore.Api/RetailCore.Api.csproj" />
     <ProjectReference Include="../../src/RetailCore.Backend/RetailCore.Services/RetailCore.Services.csproj" />
     <ProjectReference Include="../../src/RetailCore.Shared/RetailCore.Shared.csproj" />
   </ItemGroup>
